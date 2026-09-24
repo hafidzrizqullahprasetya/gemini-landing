@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ES2022",
+    "moduleDetection": "force",
     "lib": ["es2022", "DOM", "WebWorker", "DOM.Iterable"],
     "jsx": "react-jsx",
     "jsxImportSource": "@builder.io/qwik",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "Bundler",
