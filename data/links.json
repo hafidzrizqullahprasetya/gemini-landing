@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "code": "PROMO-GEMINI-18M-A19X",
+    "url": "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-A19X",
+    "status": "available",
+    "created_at": "2026-09-24T12:00:00Z",
+    "claimed_at": null,
+    "order_id": null
+  },
+  {
+    "id": 2,
+    "code": "PROMO-GEMINI-18M-B72K",
+    "url": "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-B72K",
+    "status": "available",
+    "created_at": "2026-09-24T12:00:00Z",
+    "claimed_at": null,
+    "order_id": null
+  },
+  {
+    "id": 3,
+    "code": "PROMO-GEMINI-18M-C44M",
+    "url": "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-C44M",
+    "status": "available",
+    "created_at": "2026-09-24T12:00:00Z",
+    "claimed_at": null,
+    "order_id": null
+  },
+  {
+    "id": 4,
+    "code": "PROMO-GEMINI-18M-D88P",
+    "url": "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-D88P",
+    "status": "available",
+    "created_at": "2026-09-24T12:00:00Z",
+    "claimed_at": null,
+    "order_id": null
+  },
+  {
+    "id": 5,
+    "code": "PROMO-GEMINI-18M-E11Q",
+    "url": "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-E11Q",
+    "status": "available",
+    "created_at": "2026-09-24T12:00:00Z",
+    "claimed_at": null,
+    "order_id": null
+  }
+]

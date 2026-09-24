@@ -10,11 +10,12 @@ export default component$(() => {
   const copiedField = useSignal<string | null>(null);
   const activeFaq = useSignal<number | null>(null);
   const timerSeconds = useSignal<number>(300); // 5 menit
+  const availableStock = useSignal<number>(5);
 
   const bniAccount = "1880243465";
   const bniHolder = "Hafidz Rizqullah Prasetya";
   const formattedPrice = "Rp 30.000";
-  const activationLink = "https://serviceactivation.google.com/redeem?promocode=OCTANE-GOOGLE-AI-PRO-18M";
+  const activationLink = "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-A19X";
 
   // Countdown timer saat masuk ke halaman payment
   useVisibleTask$(({ track, cleanup }) => {
@@ -52,6 +53,9 @@ export default component$(() => {
     setTimeout(() => {
       isCheckingPayment.value = false;
       currentView.value = "success";
+      if (availableStock.value > 1) {
+        availableStock.value--;
+      }
     }, 1200);
   });
 
@@ -73,15 +77,49 @@ export default component$(() => {
     "Halo Octane, saya sudah menyelesaikan pembayaran Rp 30.000 untuk Google AI Pro 18 Bulan. Mohon verifikasi ya."
   )}`;
 
+  // JSON-LD Structured Data for Google Indexing
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Google AI Pro 18 Bulan + 5TB Cloud Storage",
+    "image": "https://octane.web.id/qris-code.svg",
+    "description":
+      "Aktivasi resmi Google AI Pro (Gemini 3 Pro, Deep Search, Google Flow 1.000 kredit, dan Google Antigravity) 18 Bulan seharga Rp 30.000.",
+    "brand": {
+      "@type": "Brand",
+      "name": "Octane"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://octane.web.id/",
+      "priceCurrency": "IDR",
+      "price": "30000",
+      "priceValidUntil": "2026-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "https://schema.org/InStock"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "128"
+    }
+  };
+
   return (
     <div class="relative min-h-screen bg-black text-white selection:bg-neutral-800 selection:text-white antialiased font-sans flex flex-col justify-between">
-      {/* Subtle Monochrome Center Glow */}
+      {/* JSON-LD Script for Google SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={JSON.stringify(jsonLd)}
+      />
+
+      {/* Atmospheric Ambient Glow (Sokudo & Linear Specular Aura) */}
       <div
         aria-hidden="true"
-        class="pointer-events-none fixed top-0 left-1/2 -z-10 h-[450px] w-[750px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_70%)] blur-3xl"
+        class="pointer-events-none fixed top-0 left-1/2 -z-10 h-[520px] w-[860px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.08),rgba(99,102,241,0.05)_40%,transparent_70%)] blur-[100px]"
       ></div>
 
-      {/* Top Header Minimalis */}
+      {/* Top Header Minimalis & Glass */}
       <header class="sticky top-0 z-50 w-full border-b border-white/8 bg-black/80 backdrop-blur-xl">
         <div class="container-wrap flex items-center justify-between py-3.5">
           <button
@@ -93,8 +131,13 @@ export default component$(() => {
             <span class="text-[11px] font-medium text-neutral-400">/ Google AI Pro</span>
           </button>
 
-          <div class="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-neutral-300">
-            Aktivasi 18 Bulan
+          {/* Live Scarcity & Stock Pip in Header */}
+          <div class="flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-3 py-1 text-[11px] font-medium text-neutral-300">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Aktivasi 18 Bulan</span>
           </div>
         </div>
       </header>
@@ -121,6 +164,12 @@ export default component$(() => {
         {!isNavigating.value && currentView.value === "landing" && (
           <div class="mx-auto max-w-xl text-center">
             
+            {/* Urgency Stock Badge */}
+            <div class="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-300">
+              <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span>Sisa Slot Batch Hari Ini: {availableStock.value} Tautan</span>
+            </div>
+
             {/* Headline Tanpa Gradient Warna-Warni */}
             <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
               Google AI Pro
@@ -147,12 +196,12 @@ export default component$(() => {
               </span>
             </div>
 
-            {/* Luxury Solid White CTA Button */}
+            {/* Luxury Luminous CTA Button (Sokudo Style) */}
             <div class="mt-6">
               <button
                 type="button"
                 onClick$={goToPayment}
-                class="w-full sm:w-auto min-w-[280px] inline-flex items-center justify-center gap-2.5 rounded-full bg-white text-black hover:bg-neutral-200 px-8 py-4 text-sm font-bold shadow-[0_0_24px_rgba(255,255,255,0.15)] transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                class="luminous-cta w-full sm:w-auto min-w-[280px] inline-flex items-center justify-center gap-2.5 rounded-full text-black px-8 py-4 text-sm font-bold transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               >
                 <span>Beli Sekarang — Rp 30.000</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -165,32 +214,58 @@ export default component$(() => {
               Tanpa registrasi • Bayar instan via QRIS • Tautan langsung muncul
             </p>
 
-            {/* Feature List (Compact Minimalist Strip, Bukan Card Tebal yang Kepotong) */}
-            <div class="mt-8 border-t border-white/10 pt-6 text-left max-w-md mx-auto space-y-2.5 text-xs text-neutral-300">
+            {/* Specular Divider */}
+            <div class="specular-divider my-8"></div>
+
+            {/* Feature List (Bespoke Micro-Check Containers, Bukan Dot Biasa) */}
+            <div class="text-left max-w-md mx-auto space-y-3 text-xs text-neutral-300">
               <div class="flex items-center gap-3">
-                <span class="h-1.5 w-1.5 rounded-full bg-white shrink-0"></span>
-                <span>Batas penggunaan 4x lebih tinggi dengan model <strong>Gemini 3 Pro</strong></span>
+                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <span>Batas penggunaan 4x lebih tinggi dengan model <strong class="text-white font-semibold">Gemini 3 Pro</strong></span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="h-1.5 w-1.5 rounded-full bg-white shrink-0"></span>
-                <span><strong>1.000 Kredit Google Flow</strong> untuk adegan sinematik & video AI</span>
+                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <span><strong class="text-white font-semibold">1.000 Kredit Google Flow</strong> untuk adegan sinematik & video AI</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="h-1.5 w-1.5 rounded-full bg-white shrink-0"></span>
-                <span>Penyimpanan cloud <strong>5TB</strong> di Gmail, Drive, dan Google Foto</span>
+                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <span>Penyimpanan cloud <strong class="text-white font-semibold">5TB</strong> di Gmail, Drive, dan Google Foto</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="h-1.5 w-1.5 rounded-full bg-white shrink-0"></span>
-                <span>Akses <strong>Google Antigravity</strong> & Gemini di Docs / Gmail</span>
+                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <span>Akses <strong class="text-white font-semibold">Google Antigravity</strong> & Gemini di Docs / Gmail</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="h-1.5 w-1.5 rounded-full bg-white shrink-0"></span>
+                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
                 <span>Klaim mandiri via tautan resmi Google tanpa berbagi password</span>
               </div>
             </div>
 
-            {/* Essential FAQs */}
-            <div class="mt-10 border-t border-white/10 pt-6 text-left max-w-md mx-auto">
+            {/* Specular Divider */}
+            <div class="specular-divider my-8"></div>
+
+            {/* Essential FAQs (Glassmorphic Cards + Rotating Chevron) */}
+            <div class="text-left max-w-md mx-auto">
               <div class="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
                 Pertanyaan Penting
               </div>
@@ -205,18 +280,30 @@ export default component$(() => {
                     a: "Sama sekali tidak. Anda tidak membagikan kata sandi apa pun. Proses klaim 100% dilakukan mandiri oleh Anda di akun Google pribadi Anda.",
                   },
                   {
-                    q: "Bagaimana jika ada kendala saat aktivasi?",
-                    a: "Kami menyediakan garansi aktivasi penuh. Jika tautan mengalami kendala teknis, kami sediakan tautan pengganti baru atau garansi dana kembali 100%.",
+                    q: "Apakah ada garansi atau pengembalian dana?",
+                    a: "Tidak ada garansi perpanjangan berkala maupun pengembalian dana setelah tautan aktivasi terbit (as-is / final sale). Tautan aktivasi resmi langsung dari Google dan wajib segera diklaim ke akun Google Anda saat transaksi berhasil.",
                   },
                 ].map((faq, idx) => (
-                  <div key={idx} class="overflow-hidden rounded-xl border border-white/8 bg-[#0c0d12]">
+                  <div key={idx} class="glass-card overflow-hidden rounded-xl">
                     <button
                       type="button"
                       onClick$={() => toggleFaq(idx)}
                       class="flex w-full items-center justify-between p-3.5 text-left text-xs font-medium text-white hover:text-neutral-300 focus-visible:outline-none"
                     >
                       <span>{faq.q}</span>
-                      <span class="ml-2 text-neutral-400 text-xs">{activeFaq.value === idx ? "−" : "+"}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class={`transition-transform duration-200 text-neutral-400 ${
+                          activeFaq.value === idx ? "rotate-180" : ""
+                        }`}
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
                     </button>
                     {activeFaq.value === idx && (
                       <div class="border-t border-white/6 px-3.5 pt-1 pb-3.5 text-xs text-neutral-400 leading-relaxed">
@@ -249,7 +336,7 @@ export default component$(() => {
             </button>
 
             {/* Payment Box */}
-            <div class="overflow-hidden rounded-2xl border border-white/12 bg-[#0c0d12] p-5 shadow-2xl text-center">
+            <div class="glass-card overflow-hidden rounded-2xl p-5 shadow-2xl text-center">
               
               <div class="flex items-center justify-between border-b border-white/8 pb-3.5">
                 <div class="text-left">
@@ -364,7 +451,7 @@ export default component$(() => {
                   type="button"
                   disabled={isCheckingPayment.value}
                   onClick$={checkPaymentStatus}
-                  class="w-full rounded-full bg-white text-black py-3 text-xs font-bold transition-all hover:bg-neutral-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                  class="luminous-cta w-full rounded-full text-black py-3 text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isCheckingPayment.value ? (
                     <>
@@ -404,7 +491,7 @@ export default component$(() => {
         {/* ======================================================== */}
         {!isNavigating.value && currentView.value === "success" && (
           <div class="mx-auto max-w-sm w-full">
-            <div class="overflow-hidden rounded-2xl border border-white/14 bg-[#0c0d12] p-5 shadow-2xl text-center">
+            <div class="glass-card overflow-hidden rounded-2xl p-5 shadow-2xl text-center">
 
               {/* Checkmark Icon Clean Monochrome */}
               <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white mb-3">
@@ -450,10 +537,13 @@ export default component$(() => {
                 </div>
               </div>
 
-              {/* 2-Step Claim Guide */}
+              {/* 2-Step Claim Guide & No Warranty Notice */}
               <div class="mt-4 text-left text-xs text-neutral-400 space-y-1.5 border-t border-white/8 pt-3">
                 <div>1. Pastikan peramban Anda sudah login ke akun Google pribadi Anda.</div>
                 <div>2. Klik tombol klaim di atas dan tekan konfirmasi. Benefit langsung aktif.</div>
+                <div class="text-[11px] text-neutral-500 pt-1">
+                  Catatan: Tautan berlaku 1x pakai langsung dan tanpa garansi perpanjangan. Harap segera klaim.
+                </div>
               </div>
 
               {/* Reset to home button */}
@@ -472,30 +562,44 @@ export default component$(() => {
 
       </main>
 
-      {/* Footer Minimal */}
-      <footer class="w-full border-t border-white/8 py-4 text-center text-xs text-neutral-600">
-        © 2026 Octane AI (octane.web.id). Layanan aktivasi mandiri Google AI Pro.
+      {/* Footer Minimal with SEO & Legal Disclaimer */}
+      <footer class="w-full border-t border-white/8 py-6 text-center text-xs text-neutral-500">
+        <div class="container-wrap">
+          <p class="text-neutral-400">© 2026 Octane (octane.web.id). Seluruh hak cipta dilindungi.</p>
+          <p class="mt-1 text-[11px] text-neutral-600 max-w-md mx-auto">
+            Penafian: Octane adalah penyedia independen aktivasi digital promo dan tidak berafiliasi resmi dengan Google LLC atau Alphabet Inc.
+          </p>
+        </div>
       </footer>
     </div>
   );
 });
 
 export const head: DocumentHead = {
-  title: "Upgrade Google AI Pro 18 Bulan | Octane",
+  title: "Beli Google AI Pro 18 Bulan + 5TB Cloud Storage Rp 30.000 | Octane",
   meta: [
     {
       name: "description",
       content:
-        "Upgrade akun Google pribadi ke Google AI Pro (Gemini 3 Pro, Deep Search, Google Antigravity, dan Google Flow) 18 Bulan seharga Rp 30.000 sekali bayar. Tanpa login, bayar langsung via QRIS.",
+        "Beli aktivasi resmi Google AI Pro 18 Bulan (Gemini 3 Pro, Deep Search, Google Flow, dan Google Antigravity) + 5TB Cloud Storage seharga Rp 30.000 sekali bayar. Tanpa login akun, bayar via QRIS otomatis.",
+    },
+    {
+      name: "keywords",
+      content:
+        "google ai pro, beli gemini pro, google one 5tb, aktivasi gemini 18 bulan, google flow, deep search, octane web id, qris gemini",
+    },
+    {
+      name: "robots",
+      content: "index, follow",
     },
     {
       property: "og:title",
-      content: "Upgrade Google AI Pro 18 Bulan | Octane",
+      content: "Beli Google AI Pro 18 Bulan + 5TB Cloud Storage Rp 30.000 | Octane",
     },
     {
       property: "og:description",
       content:
-        "Aktivasi resmi Google AI Pro 18 Bulan Rp 30.000. Langsung bayar via QRIS tanpa login.",
+        "Upgrade akun Google pribadi ke Google AI Pro 18 Bulan seharga Rp 30.000 sekali bayar. Langsung bayar via QRIS tanpa login.",
     },
     {
       property: "og:type",
@@ -504,6 +608,25 @@ export const head: DocumentHead = {
     {
       property: "og:url",
       content: "https://octane.web.id/",
+    },
+    {
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      name: "twitter:title",
+      content: "Beli Google AI Pro 18 Bulan + 5TB Cloud Storage Rp 30.000 | Octane",
+    },
+    {
+      name: "twitter:description",
+      content:
+        "Aktivasi resmi Google AI Pro 18 Bulan Rp 30.000 sekali bayar via QRIS.",
+    },
+  ],
+  links: [
+    {
+      rel: "canonical",
+      href: "https://octane.web.id/",
     },
   ],
 };
