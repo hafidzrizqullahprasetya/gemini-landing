@@ -1,6 +1,6 @@
 {
-  "name": "my-qwik-empty-starter",
-  "description": "Blank project with routing included",
+  "name": "gemini-landing",
+  "description": "Google Gemini Pro 18 Bulan Landing Page by Octane AI",
   "engines": {
     "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
   },
@@ -8,9 +8,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "qwik build",
+    "build": "qwik build && vite build -c adapters/static/vite.config.ts",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.server": "vite build -c adapters/static/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
     "dev": "vite --mode ssr",

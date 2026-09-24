@@ -1,9 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-  "name": "qwik-project-name",
-  "short_name": "Welcome to Qwik",
-  "start_url": ".",
+  "name": "Octane AI — Google Gemini Pro",
+  "short_name": "Gemini Pro",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#fff",
-  "description": "A Qwik project app."
+  "background_color": "#000000",
+  "theme_color": "#0091ff",
+  "description": "Google Gemini Pro 18 Bulan + 2TB Google One Cloud Storage."
 }
