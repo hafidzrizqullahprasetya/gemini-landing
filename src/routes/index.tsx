@@ -113,10 +113,10 @@ export default component$(() => {
         dangerouslySetInnerHTML={JSON.stringify(jsonLd)}
       />
 
-      {/* Atmospheric Ambient Glow (Sokudo & Linear Specular Aura) */}
+      {/* Atmospheric Ambient Glow (Linear / Raycast Style) */}
       <div
         aria-hidden="true"
-        class="pointer-events-none fixed top-0 left-1/2 -z-10 h-[520px] w-[860px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.08),rgba(99,102,241,0.05)_40%,transparent_70%)] blur-[100px]"
+        class="pointer-events-none fixed top-0 left-1/2 -z-10 h-[580px] w-[900px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.1),rgba(99,102,241,0.06)_40%,transparent_70%)] blur-[110px]"
       ></div>
 
       {/* Top Header Minimalis & Glass */}
@@ -159,110 +159,138 @@ export default component$(() => {
         )}
 
         {/* ======================================================== */}
-        {/* VIEW 1: LANDING (Monochrome, Tenang, Fit 1 Screen Mobile) */}
+        {/* VIEW 1: LANDING (Center Price + Visual UI Cards + Zero Clutter) */}
         {/* ======================================================== */}
         {!isNavigating.value && currentView.value === "landing" && (
           <div class="mx-auto max-w-xl text-center">
             
             {/* Urgency Stock Badge */}
-            <div class="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-300">
+            <div class="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-300">
               <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
               <span>Sisa Slot Batch Hari Ini: {availableStock.value} Tautan</span>
             </div>
 
-            {/* Headline Tanpa Gradient Warna-Warni */}
+            {/* Title Ringkas & Tajam */}
             <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
               Google AI Pro
-              <span class="block text-neutral-400 font-medium text-xl sm:text-3xl mt-1.5">
-                Akses Resmi 18 Bulan
+              <span class="block text-neutral-400 font-semibold text-lg sm:text-2xl mt-1">
+                Aktivasi Resmi 18 Bulan Penuh
               </span>
             </h1>
 
-            {/* Subtitle Ringkas */}
-            <p class="mt-4 text-sm sm:text-base leading-relaxed text-neutral-300 max-w-md mx-auto">
-              Upgrade langsung di akun Google pribadimu. Akses Gemini 3 Pro, 1.000 Kredit Google Flow, Deep Search, dan penyimpanan cloud 5TB.
-            </p>
-
-            {/* Pricing Row Bersih (No Broken Line Wrapping) */}
-            <div class="mt-6 flex items-center justify-center gap-3">
-              <span class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            {/* BIG CENTERED 30K PRICE (DEAD-CENTER STAGE) */}
+            <div class="my-6 flex flex-col items-center justify-center text-center">
+              <div class="text-5xl sm:text-6xl font-black text-white tracking-tight">
                 {formattedPrice}
-              </span>
-              <span class="text-xs text-neutral-400 line-through">
-                Rp 309.000/bln
-              </span>
-              <span class="rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
-                Sekali bayar
-              </span>
+              </div>
+              <div class="mt-2 flex items-center justify-center gap-2">
+                <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-neutral-400 line-through">
+                  Rp 309.000/bln
+                </span>
+                <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-neutral-200">
+                  Sekali Bayar • 18 Bulan
+                </span>
+              </div>
             </div>
 
-            {/* Luxury Luminous CTA Button (Sokudo Style) */}
-            <div class="mt-6">
+            {/* Primary Action Button (Centered) */}
+            <div class="flex justify-center">
               <button
                 type="button"
                 onClick$={goToPayment}
-                class="luminous-cta w-full sm:w-auto min-w-[280px] inline-flex items-center justify-center gap-2.5 rounded-full text-black px-8 py-4 text-sm font-bold transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                class="luminous-cta w-full sm:w-auto min-w-[280px] max-w-sm inline-flex items-center justify-center gap-2.5 rounded-full text-black px-8 py-4 text-sm sm:text-base font-bold transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               >
                 <span>Beli Sekarang — Rp 30.000</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
 
-            <p class="mt-2.5 text-xs text-neutral-400">
-              Tanpa registrasi • Bayar instan via QRIS • Tautan langsung muncul
+            <p class="mt-2 text-[11px] text-neutral-400 whitespace-nowrap">
+              Tanpa registrasi akun • Bayar QRIS • Tautan instan
             </p>
 
             {/* Specular Divider */}
-            <div class="specular-divider my-8"></div>
+            <div class="specular-divider my-7"></div>
 
-            {/* Feature List (Bespoke Micro-Check Containers, Bukan Dot Biasa) */}
-            <div class="text-left max-w-md mx-auto space-y-3 text-xs text-neutral-300">
-              <div class="flex items-center gap-3">
-                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5" />
+            {/* VISUAL ICON-FIRST BENEFIT GRID (Orang Malas Baca -> Cukup Liat Icon!) */}
+            <div class="grid grid-cols-2 gap-2.5 text-left max-w-md mx-auto">
+              
+              {/* Feature 1: Gemini 3 Pro */}
+              <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                   </svg>
                 </div>
-                <span>Batas penggunaan 4x lebih tinggi dengan model <strong class="text-white font-semibold">Gemini 3 Pro</strong></span>
+                <div>
+                  <div class="text-xs font-bold text-white">Gemini 3 Pro</div>
+                  <div class="text-[11px] text-neutral-400 leading-tight mt-0.5">Batas 4x Lipat + Deep Search</div>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5" />
+
+              {/* Feature 2: Google Flow Studio */}
+              <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                    <path d="m9 8 6 4-6 4Z" />
                   </svg>
                 </div>
-                <span><strong class="text-white font-semibold">1.000 Kredit Google Flow</strong> untuk adegan sinematik & video AI</span>
+                <div>
+                  <div class="text-xs font-bold text-white">1.000 Kredit Flow</div>
+                  <div class="text-[11px] text-neutral-400 leading-tight mt-0.5">Studio Video AI Sinematik</div>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5" />
+
+              {/* Feature 3: 5TB Cloud */}
+              <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
                   </svg>
                 </div>
-                <span>Penyimpanan cloud <strong class="text-white font-semibold">5TB</strong> di Gmail, Drive, dan Google Foto</span>
+                <div>
+                  <div class="text-xs font-bold text-white">5TB Cloud Storage</div>
+                  <div class="text-[11px] text-neutral-400 leading-tight mt-0.5">Drive, Photos, dan Gmail</div>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5" />
+
+              {/* Feature 4: Antigravity */}
+              <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m18 16 4-4-4-4" />
+                    <path d="m6 8-4 4 4 4" />
+                    <path d="m14.5 4-5 16" />
                   </svg>
                 </div>
-                <span>Akses <strong class="text-white font-semibold">Google Antigravity</strong> & Gemini di Docs / Gmail</span>
+                <div>
+                  <div class="text-xs font-bold text-white">Google Antigravity</div>
+                  <div class="text-[11px] text-neutral-400 leading-tight mt-0.5">Platform Agen Otonom AI</div>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/14 bg-white/5 text-white">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5" />
+
+            </div>
+
+            {/* Feature 5: Security / Direct Link Full Width Card */}
+            <div class="mt-2.5 max-w-md mx-auto">
+              <div class="glass-card rounded-2xl p-3 flex items-center gap-3 text-left">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                   </svg>
                 </div>
-                <span>Klaim mandiri via tautan resmi Google tanpa berbagi password</span>
+                <div>
+                  <div class="text-xs font-bold text-white">Aktivasi Mandiri Tanpa Password</div>
+                  <div class="text-[11px] text-neutral-400">Klaim langsung via domain resmi Google di akun pribadimu.</div>
+                </div>
               </div>
             </div>
 
             {/* Specular Divider */}
-            <div class="specular-divider my-8"></div>
+            <div class="specular-divider my-7"></div>
 
             {/* Essential FAQs (Glassmorphic Cards + Rotating Chevron) */}
             <div class="text-left max-w-md mx-auto">
