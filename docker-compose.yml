@@ -1,0 +1,7 @@
+services:
+  gemini-landing:
+    build: .
+    container_name: octane-gemini-landing
+    restart: always
+    ports:
+      - "8090:80"
