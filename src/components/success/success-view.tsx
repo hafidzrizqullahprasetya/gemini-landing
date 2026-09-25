@@ -66,22 +66,28 @@ export const SuccessView = component$<SuccessViewProps>(
               {activationLink}
             </div>
 
-            <div class="mt-4 flex flex-col sm:flex-row items-center gap-2.5">
-              <a
-                href={activationLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="w-full sm:flex-1 rounded-xl bg-white text-black py-3 text-center text-xs sm:text-sm font-bold hover:bg-neutral-200 transition-colors cursor-pointer"
-              >
-                Klaim Sekarang ke Akun Google
-              </a>
-
+            <div class="mt-4">
               <button
                 type="button"
                 onClick$={() => onCopy$(activationLink, "link")}
-                class="w-full sm:w-auto rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-xs sm:text-sm font-medium text-neutral-300 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                class="w-full rounded-xl bg-white text-black py-3 text-center text-xs sm:text-sm font-bold hover:bg-neutral-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
-                {copiedField === "link" ? "Tersalin!" : "Salin Tautan"}
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+                <span>
+                  {copiedField === "link"
+                    ? "Tautan Berhasil Disalin!"
+                    : "Salin Tautan Aktivasi"}
+                </span>
               </button>
             </div>
           </div>
@@ -143,8 +149,9 @@ export const SuccessView = component$<SuccessViewProps>(
             <div class="flex items-start gap-2">
               <span class="font-bold text-white">2.</span>
               <span>
-                Klik tombol klaim di atas dan tekan konfirmasi aktivasi.
-                Kapasitas 5TB dan Gemini 3.1 Pro langsung aktif.
+                Salin tautan aktivasi di atas, tempel (paste) dan buka di
+                peramban untuk konfirmasi aktivasi. Kapasitas 5TB dan Gemini 3.1
+                Pro langsung aktif.
               </span>
             </div>
             <div class="text-[11px] sm:text-xs text-neutral-500 pt-1 leading-relaxed">
