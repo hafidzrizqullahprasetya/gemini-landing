@@ -1,5 +1,6 @@
 import http from "node:http";
 import https from "node:https";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -238,7 +239,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Endpoint: Midtrans Webhook Notification
+  // Endpoint: Midtrans Webhook Notification with SHA-512 Security Verification
   if (url.pathname === "/api/notification" && req.method === "POST") {
     let body = "";
     req.on("data", (c) => (body += c));
@@ -246,16 +247,42 @@ const server = http.createServer(async (req, res) => {
       try {
         const notification = JSON.parse(body);
         const orderId = notification.order_id;
-        const status = notification.transaction_status;
+        const statusCode = notification.status_code;
+        const grossAmount = notification.gross_amount;
+        const incomingSignature = notification.signature_key;
 
-        if (status === "settlement" || status === "capture") {
-          getAvailableLink(orderId);
+        // 1. Verifikasi Kriptografi SHA-512 Signature Key resmi Midtrans
+        const expectedSignature = crypto
+          .createHash("sha512")
+          .update(`${orderId}${statusCode}${grossAmount}${MIDTRANS_SERVER_KEY}`)
+          .digest("hex");
+
+        if (!incomingSignature || incomingSignature !== expectedSignature) {
+          console.warn(`[Security Alert] Fake/Invalid webhook signature detected for order: ${orderId}`);
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "error", message: "Invalid signature key" }));
+          return;
+        }
+
+        // 2. Double-Check Verifikasi Langsung Server-to-Server ke Midtrans API
+        // Mencegah replay attack atau pemalsuan payload
+        const midtransRes = await callMidtrans(
+          { path: `/v2/${encodeURIComponent(orderId)}/status`, method: "GET" }
+        );
+
+        if (midtransRes.statusCode === 200) {
+          const verifiedStatus = midtransRes.data?.transaction_status;
+          if (verifiedStatus === "settlement" || verifiedStatus === "capture") {
+            getAvailableLink(orderId);
+            console.log(`[Webhook Success] Verified genuine payment for order ${orderId}`);
+          }
         }
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ status: "ok" }));
       } catch (err) {
-        res.writeHead(200, { "Content-Type": "application/json" });
+        console.error("[Webhook Error]:", err);
+        res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ status: "error", message: err.message }));
       }
     });
