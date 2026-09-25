@@ -8,9 +8,9 @@
 
 export type AppView = "landing" | "payment" | "success";
 
-export type PaymentMethod = "qris" | "bni";
+export type PaymentMethod = "qris";
 
-export type CopiedField = "nominal" | "bni" | "link";
+export type CopiedField = "nominal" | "link";
 
 export type BenefitBadgeColor = "blue" | "purple" | "cyan" | "emerald";
 
@@ -48,12 +48,6 @@ export interface PricingConfig {
   readonly geminiMultiplier: string;
 }
 
-export interface BankAccountConfig {
-  readonly bankName: string;
-  readonly accountNumber: string;
-  readonly accountHolder: string;
-}
-
 export interface ProductMetadata {
   readonly name: string;
   readonly brandName: string;
@@ -87,7 +81,7 @@ export type DeepReadonly<T> = T extends (...args: unknown[]) => unknown
  * Type guard for PaymentMethod
  */
 export const isPaymentMethod = (value: unknown): value is PaymentMethod => {
-  return value === "qris" || value === "bni";
+  return value === "qris";
 };
 
 /**

@@ -3,33 +3,26 @@ import type {
   SecurityFeatureItem,
   FaqItem,
   PricingConfig,
-  BankAccountConfig,
   ProductMetadata,
 } from "~/types/landing";
 
 export const PRICING_CONFIG = {
   originalPriceFormatted: "Rp 309 rb/bln",
-  promoPriceFormatted: "Rp 30.000",
-  promoPriceNumeric: 30000,
+  promoPriceFormatted: "Rp 1",
+  promoPriceNumeric: 1,
   currency: "IDR",
-  billingPeriodLabel: "Sekali Bayar • 18 Bulan",
+  billingPeriodLabel: "Test Produksi • 18 Bulan",
   headlineBenefit: "Akses 4x Lipat ke Gemini 3.1 Pro + Cloud 5 TB",
   storageCapacity: "5 TB",
   geminiMultiplier: "Akses 4x Lipat*",
 } as const satisfies PricingConfig;
-
-export const BANK_CONFIG = {
-  bankName: "BNI",
-  accountNumber: "1880243465",
-  accountHolder: "Hafidz Rizqullah Prasetya",
-} as const satisfies BankAccountConfig;
 
 export const ACTIVATION_FALLBACK_LINK =
   "https://serviceactivation.google.com/redeem?promocode=PROMO-GEMINI-18M-A19X" as const;
 
 export const WHATSAPP_CONFIRM_URL =
   `https://wa.me/6281325081046?text=${encodeURIComponent(
-    "Halo Octane, saya sudah menyelesaikan pembayaran Rp 30.000 untuk Google AI Pro 18 Bulan. Mohon verifikasi ya.",
+    "Halo Octane, saya sudah menyelesaikan pembayaran Rp 1 untuk Google AI Pro 18 Bulan. Mohon verifikasi ya.",
   )}` as const;
 
 export const BENEFIT_ITEMS = [
@@ -106,7 +99,7 @@ export const FAQ_ITEMS = [
   {
     question: "Bagaimana cara kerja klaim tautan resmi Google AI Pro?",
     answer:
-      "Setelah verifikasi pembayaran Rp 30.000, layar seketika memunculkan tautan aktivasi resmi dari domain serviceactivation.google.com. Anda cukup membuka tautan tersebut di peramban dan mengonfirmasi aktivasi pada akun Google Anda.",
+      "Setelah verifikasi pembayaran Rp 1, layar seketika memunculkan tautan aktivasi resmi dari domain serviceactivation.google.com. Anda cukup membuka tautan tersebut di peramban dan mengonfirmasi aktivasi pada akun Google Anda.",
   },
   {
     question: "Apakah penyimpanan 5 TB bisa dibagikan dengan keluarga?",
@@ -135,7 +128,7 @@ export const PRODUCT_METADATA = {
   name: "Google AI Pro 18 Bulan + 5TB Cloud Storage (Gemini 3.1 Pro)",
   brandName: "Octane",
   description:
-    "Aktivasi resmi Google AI Pro 18 Bulan (Gemini 3.1 Pro, Deep Research, 5TB Storage, Google Flow, Antigravity, AI Studio, Jules, Family Share 5 orang) seharga Rp 30.000.",
+    "Aktivasi resmi Google AI Pro 18 Bulan (Gemini 3.1 Pro, Deep Research, 5TB Storage, Google Flow, Antigravity, AI Studio, Jules, Family Share 5 orang) seharga Rp 1.",
   image: "https://octane.web.id/qris-code.svg",
   canonicalUrl: "https://octane.web.id/",
   priceValidUntil: "2026-12-31",

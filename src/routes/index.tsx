@@ -12,14 +12,13 @@ import {
   ACTIVATION_FALLBACK_LINK,
   PRODUCT_METADATA,
 } from "~/constants/landing-data";
-import type { AppView, PaymentMethod, CopiedField } from "~/types/landing";
+import type { AppView, CopiedField } from "~/types/landing";
 
 export default component$(() => {
   // Navigation states: "landing" | "payment" | "success"
   const currentView = useSignal<AppView>("landing");
   const isNavigating = useSignal<boolean>(false);
   const isCheckingPayment = useSignal<boolean>(false);
-  const paymentMethod = useSignal<PaymentMethod>("qris");
   const copiedField = useSignal<CopiedField | null>(null);
   const activeFaq = useSignal<number | null>(null);
   const availableLinks = linksData.filter(
@@ -32,6 +31,9 @@ export default component$(() => {
   const timerSeconds = useSignal<number>(300); // 5 menit
   const availableStock = useSignal<number>(initialStock);
   const currentOrderId = useSignal<string>("");
+  const qrUrl = useSignal<string | null>(null);
+  const isLoadingQr = useSignal<boolean>(false);
+  const statusNotice = useSignal<string | null>(null);
   const recoveredOrder = useSignal<{
     orderId: string;
     activationLink: string;
@@ -39,7 +41,7 @@ export default component$(() => {
   } | null>(null);
   const showRecoveryBanner = useSignal<boolean>(true);
 
-  // Check localStorage saat halaman dibuka & kelola timer sesi pembayaran
+  // Check localStorage saat halaman dibuka, polling status Midtrans & timer sesi
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -59,13 +61,48 @@ export default component$(() => {
 
     track(() => currentView.value);
     if (currentView.value === "payment") {
-      timerSeconds.value = 300;
-      const interval = setInterval(() => {
+      timerSeconds.value = 900; // 15 menit (standar QRIS)
+      const timerInterval = setInterval(() => {
         if (timerSeconds.value > 0) {
           timerSeconds.value--;
         }
       }, 1000);
-      cleanup(() => clearInterval(interval));
+
+      // Polling realtime status pembayaran setiap 3.5 detik
+      const pollInterval = setInterval(async () => {
+        if (!currentOrderId.value || isCheckingPayment.value) return;
+        try {
+          const res = await fetch(
+            `/api/status?order_id=${encodeURIComponent(currentOrderId.value)}`,
+          );
+          const data = await res.json();
+          if (data && data.is_paid) {
+            currentView.value = "success";
+            const orderData = {
+              orderId: currentOrderId.value,
+              activationLink: data.activation_link || activeActivationLink,
+              savedAt: new Date().toISOString(),
+            };
+            recoveredOrder.value = orderData;
+            if (typeof window !== "undefined" && window.localStorage) {
+              window.localStorage.setItem(
+                "octane_active_order",
+                JSON.stringify(orderData),
+              );
+            }
+            if (availableStock.value > 0) {
+              availableStock.value--;
+            }
+          }
+        } catch {
+          // silent polling failover
+        }
+      }, 3500);
+
+      cleanup(() => {
+        clearInterval(timerInterval);
+        clearInterval(pollInterval);
+      });
     }
   });
 
@@ -77,48 +114,85 @@ export default component$(() => {
     return `${m}:${s}`;
   };
 
-  // Navigasi dengan loading state profesional (Industry Best Practice)
-  const goToPayment = $(() => {
+  // Navigasi ke halaman pembayaran dengan memanggil Midtrans Core API QRIS langsung
+  const goToPayment = $(async () => {
     if (isNavigating.value) return;
     isNavigating.value = true;
-    setTimeout(() => {
-      currentView.value = "payment";
+    isLoadingQr.value = true;
+    statusNotice.value = null;
+
+    try {
+      const res = await fetch("/api/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gross_amount: 1 }),
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        currentOrderId.value = data.order_id;
+        qrUrl.value = data.qr_url;
+      } else {
+        throw new Error(data?.message || "Midtrans charge error");
+      }
+    } catch (err) {
+      console.error("Gagal request Midtrans QRIS:", err);
+      currentOrderId.value = `OCT-${Date.now()}`;
+      qrUrl.value = "/qris-code.svg";
+    } finally {
+      isLoadingQr.value = false;
       isNavigating.value = false;
-    }, 500);
+      currentView.value = "payment";
+    }
   });
 
   const goToHome = $(() => {
     currentView.value = "landing";
   });
 
-  const checkPaymentStatus = $(() => {
+  const checkPaymentStatus = $(async () => {
     if (isCheckingPayment.value) return;
     isCheckingPayment.value = true;
-    setTimeout(() => {
+    statusNotice.value = null;
+
+    try {
+      const res = await fetch(
+        `/api/status?order_id=${encodeURIComponent(currentOrderId.value)}`,
+      );
+      const data = await res.json();
+
+      if (data && data.is_paid) {
+        isCheckingPayment.value = false;
+        currentView.value = "success";
+
+        const orderData = {
+          orderId: currentOrderId.value,
+          activationLink: data.activation_link || activeActivationLink,
+          savedAt: new Date().toISOString(),
+        };
+
+        recoveredOrder.value = orderData;
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem(
+            "octane_active_order",
+            JSON.stringify(orderData),
+          );
+        }
+
+        if (availableStock.value > 0) {
+          availableStock.value--;
+        }
+        return;
+      } else {
+        statusNotice.value =
+          "Pembayaran belum terdeteksi. Silakan selesaikan scan QRIS di aplikasi Anda, lalu tekan cek kembali.";
+      }
+    } catch (err) {
+      console.error("Gagal memeriksa status pembayaran:", err);
+      statusNotice.value =
+        "Gagal menghubungi server verifikasi. Silakan coba sesaat lagi.";
+    } finally {
       isCheckingPayment.value = false;
-      currentView.value = "success";
-
-      const newOrderId = `OCT-${Math.floor(1000 + Math.random() * 9000)}`;
-      currentOrderId.value = newOrderId;
-
-      const orderData = {
-        orderId: newOrderId,
-        activationLink: activeActivationLink,
-        savedAt: new Date().toISOString(),
-      };
-
-      recoveredOrder.value = orderData;
-      if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem(
-          "octane_active_order",
-          JSON.stringify(orderData),
-        );
-      }
-
-      if (availableStock.value > 0) {
-        availableStock.value--;
-      }
-    }, 1200);
+    }
   });
 
   const clearSavedSession = $(() => {
@@ -146,10 +220,6 @@ export default component$(() => {
 
   const toggleFaq = $((idx: number) => {
     activeFaq.value = activeFaq.value === idx ? null : idx;
-  });
-
-  const selectPaymentMethod = $((method: PaymentMethod) => {
-    paymentMethod.value = method;
   });
 
   // JSON-LD Structured Data for Google Indexing
@@ -258,13 +328,15 @@ export default component$(() => {
         {/* View 2: Payment */}
         {!isNavigating.value && currentView.value === "payment" && (
           <PaymentView
+            qrUrl={qrUrl.value}
+            isLoadingQr={isLoadingQr.value}
+            orderId={currentOrderId.value}
             timerSeconds={timerSeconds.value}
             formattedTimer={formatTimer(timerSeconds.value)}
-            paymentMethod={paymentMethod.value}
             isCheckingPayment={isCheckingPayment.value}
+            statusNotice={statusNotice.value}
             copiedField={copiedField.value}
             onBack$={goToHome}
-            onSelectMethod$={selectPaymentMethod}
             onCheckPayment$={checkPaymentStatus}
             onCopy$={copyToClipboard}
           />

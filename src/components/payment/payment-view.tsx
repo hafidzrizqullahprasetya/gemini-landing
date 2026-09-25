@@ -1,34 +1,33 @@
 import { component$, type QRL } from "@builder.io/qwik";
 import { QrisDisplay } from "~/components/payment/qris-display";
-import { BniDisplay } from "~/components/payment/bni-display";
-import {
-  PRICING_CONFIG,
-  BANK_CONFIG,
-  WHATSAPP_CONFIRM_URL,
-} from "~/constants/landing-data";
-import type { CopiedField, PaymentMethod } from "~/types/landing";
+import { PRICING_CONFIG, WHATSAPP_CONFIRM_URL } from "~/constants/landing-data";
+import type { CopiedField } from "~/types/landing";
 
 interface PaymentViewProps {
+  readonly qrUrl: string | null;
+  readonly isLoadingQr: boolean;
+  readonly orderId: string;
   readonly timerSeconds: number;
   readonly formattedTimer: string;
-  readonly paymentMethod: PaymentMethod;
   readonly isCheckingPayment: boolean;
+  readonly statusNotice: string | null;
   readonly copiedField: CopiedField | null;
   readonly onBack$: QRL<() => void>;
-  readonly onSelectMethod$: QRL<(method: PaymentMethod) => void>;
   readonly onCheckPayment$: QRL<() => void>;
   readonly onCopy$: QRL<(text: string, field: CopiedField) => void>;
 }
 
 export const PaymentView = component$<PaymentViewProps>(
   ({
+    qrUrl,
+    isLoadingQr,
+    orderId,
     timerSeconds,
     formattedTimer,
-    paymentMethod,
     isCheckingPayment,
+    statusNotice,
     copiedField,
     onBack$,
-    onSelectMethod$,
     onCheckPayment$,
     onCopy$,
   }) => {
@@ -55,11 +54,16 @@ export const PaymentView = component$<PaymentViewProps>(
 
         {/* Responsive Grid: 1 col on mobile, 2 cols on tablet & laptop/PC */}
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-start">
-          {/* Left Column: Order Summary & Timer (Tablet & PC) */}
+          {/* Left Column: Order Summary & Timer */}
           <div class="md:col-span-5 space-y-4">
             <div class="glass-card rounded-2xl p-5 sm:p-6 text-left">
-              <div class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Ringkasan Pesanan
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  Ringkasan Pesanan
+                </span>
+                <span class="text-[11px] font-mono text-neutral-500">
+                  #{orderId || "WAITING"}
+                </span>
               </div>
 
               <div class="mt-3">
@@ -67,7 +71,7 @@ export const PaymentView = component$<PaymentViewProps>(
                   Google AI Pro
                 </h2>
                 <p class="text-xs text-neutral-400 mt-0.5">
-                  Paket Resmi 18 Bulan • Nilai Asli Rp 309 rb/bln
+                  Aktivasi Resmi 18 Bulan • Test Produksi
                 </p>
               </div>
 
@@ -128,45 +132,19 @@ export const PaymentView = component$<PaymentViewProps>(
                   </svg>
                   <span>AI Studio, Google Antigravity, & Jules Coding</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    class="text-emerald-400 shrink-0"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Gemini di Gmail, Dokumen, Spreadsheet, & Spark</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    class="text-emerald-400 shrink-0"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>US$10 Kredit Cloud/bln + Home & Health Premium</span>
-                </div>
               </div>
 
               <div class="mt-4 pt-4 border-t border-white/8 flex items-baseline justify-between">
                 <div>
-                  <div class="text-[11px] text-neutral-400">Total Tagihan</div>
-                  <div class="text-2xl font-black text-white">
+                  <div class="text-[11px] text-neutral-400">
+                    Total Tagihan (Test)
+                  </div>
+                  <div class="text-3xl font-black text-white">
                     {PRICING_CONFIG.promoPriceFormatted}
                   </div>
                 </div>
                 <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300">
-                  Sekali Bayar
+                  Midtrans QRIS
                 </span>
               </div>
             </div>
@@ -179,7 +157,7 @@ export const PaymentView = component$<PaymentViewProps>(
                     class={`h-2 w-2 rounded-full ${timerSeconds > 0 ? "bg-amber-400" : "bg-red-400"}`}
                   />
                   <span class="text-xs font-medium text-neutral-300">
-                    Sisa Batas Waktu Sesi
+                    Masa Berlaku QRIS
                   </span>
                 </div>
                 <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wider">
@@ -187,75 +165,58 @@ export const PaymentView = component$<PaymentViewProps>(
                 </div>
               </div>
               <p class="mt-2 text-[11px] text-neutral-500 leading-tight">
-                Selesaikan transaksi sebelum waktu habis untuk memastikan tautan
-                terbit otomatis.
+                Status pembayaran terdeteksi otomatis seketika setelah Anda
+                menyelesaikan transaksi di aplikasi banking / e-wallet.
               </p>
             </div>
           </div>
 
-          {/* Right Column: Payment Method & Action (QRIS / BNI) */}
+          {/* Right Column: Single Dedicated Midtrans QRIS */}
           <div class="md:col-span-7">
             <div class="glass-card rounded-2xl p-5 sm:p-6 shadow-2xl text-center">
-              {/* Header Tabs Monokrom */}
+              {/* Header Single QRIS */}
               <div class="flex items-center justify-between pb-3.5 border-b border-white/8">
                 <div class="text-left">
-                  <div class="text-xs font-semibold text-white">
-                    Metode Pembayaran
+                  <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                    <span class="text-xs sm:text-sm font-bold text-white">
+                      QRIS Midtrans Resmi
+                    </span>
                   </div>
-                  <div class="text-[11px] text-neutral-400">
-                    Pilih kanal transaksi favorit Anda
+                  <div class="text-[11px] text-neutral-400 mt-0.5">
+                    Merchant ID: G501573755
                   </div>
                 </div>
                 <div class="text-right">
-                  <div class="text-[11px] text-neutral-400">Nominal</div>
+                  <div class="text-[11px] text-neutral-400">Nominal Bayar</div>
                   <div class="text-sm font-bold text-white">
                     {PRICING_CONFIG.promoPriceFormatted}
                   </div>
                 </div>
               </div>
 
-              {/* Payment Method Switcher */}
-              <div class="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-black p-1 border border-white/8">
-                <button
-                  type="button"
-                  onClick$={() => onSelectMethod$("qris")}
-                  class={`rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    paymentMethod === "qris"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-neutral-400 hover:text-white"
-                  }`}
-                >
-                  QRIS Instan
-                </button>
-                <button
-                  type="button"
-                  onClick$={() => onSelectMethod$("bni")}
-                  class={`rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    paymentMethod === "bni"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-neutral-400 hover:text-white"
-                  }`}
-                >
-                  Transfer BNI
-                </button>
-              </div>
+              {/* Dynamic QRIS Component */}
+              <QrisDisplay
+                qrUrl={qrUrl}
+                isLoadingQr={isLoadingQr}
+                orderId={orderId}
+                amountFormatted={PRICING_CONFIG.promoPriceFormatted}
+                copiedField={copiedField}
+                onCopy$={onCopy$}
+              />
 
-              {/* QRIS / BNI Panel */}
-              {paymentMethod === "qris" ? (
-                <QrisDisplay copiedField={copiedField} onCopy$={onCopy$} />
-              ) : (
-                <BniDisplay
-                  bank={BANK_CONFIG}
-                  copiedField={copiedField}
-                  onCopy$={onCopy$}
-                />
+              {/* Status Notice if user clicked check but still pending */}
+              {statusNotice && (
+                <div class="mt-3 rounded-xl border border-amber-500/25 bg-amber-500/10 p-2.5 text-xs text-amber-300">
+                  {statusNotice}
+                </div>
               )}
 
               {/* Status Verification Checker Button */}
-              <div class="mt-6 pt-4 border-t border-white/8">
+              <div class="mt-5 pt-4 border-t border-white/8">
                 <button
                   type="button"
-                  disabled={isCheckingPayment}
+                  disabled={isCheckingPayment || isLoadingQr}
                   onClick$={onCheckPayment$}
                   class="luminous-cta w-full rounded-full text-black py-3.5 text-xs sm:text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
@@ -270,11 +231,11 @@ export const PaymentView = component$<PaymentViewProps>(
                       >
                         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                       </svg>
-                      <span>Memverifikasi Pembayaran...</span>
+                      <span>Memeriksa Status Midtrans...</span>
                     </>
                   ) : (
                     <>
-                      <span>Saya Sudah Bayar (Cek Status)</span>
+                      <span>Saya Sudah Bayar (Cek Status Sekarang)</span>
                       <svg
                         width="14"
                         height="14"
@@ -298,7 +259,7 @@ export const PaymentView = component$<PaymentViewProps>(
                   rel="noopener noreferrer"
                   class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
                 >
-                  Butuh bantuan? Konfirmasi manual via WhatsApp
+                  Butuh bantuan transaksi? Chat WhatsApp
                 </a>
               </div>
             </div>
