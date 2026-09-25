@@ -25,16 +25,38 @@ export default component$(() => {
   const availableLinks = linksData.filter(
     (item) => item.status === "available",
   );
-  const initialStock = availableLinks.length > 0 ? availableLinks.length : 5;
+  const initialStock = availableLinks.length;
   const activeActivationLink =
     availableLinks[0]?.url ?? ACTIVATION_FALLBACK_LINK;
 
   const timerSeconds = useSignal<number>(300); // 5 menit
   const availableStock = useSignal<number>(initialStock);
+  const currentOrderId = useSignal<string>("");
+  const recoveredOrder = useSignal<{
+    orderId: string;
+    activationLink: string;
+    savedAt: string;
+  } | null>(null);
+  const showRecoveryBanner = useSignal<boolean>(true);
 
-  // Countdown timer saat masuk ke halaman payment
+  // Check localStorage saat halaman dibuka & kelola timer sesi pembayaran
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem("octane_active_order");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.activationLink && parsed?.orderId) {
+            recoveredOrder.value = parsed;
+            currentOrderId.value = parsed.orderId;
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat sesi order tersimpan:", err);
+      }
+    }
+
     track(() => currentView.value);
     if (currentView.value === "payment") {
       timerSeconds.value = 300;
@@ -75,10 +97,41 @@ export default component$(() => {
     setTimeout(() => {
       isCheckingPayment.value = false;
       currentView.value = "success";
-      if (availableStock.value > 1) {
+
+      const newOrderId = `OCT-${Math.floor(1000 + Math.random() * 9000)}`;
+      currentOrderId.value = newOrderId;
+
+      const orderData = {
+        orderId: newOrderId,
+        activationLink: activeActivationLink,
+        savedAt: new Date().toISOString(),
+      };
+
+      recoveredOrder.value = orderData;
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(
+          "octane_active_order",
+          JSON.stringify(orderData),
+        );
+      }
+
+      if (availableStock.value > 0) {
         availableStock.value--;
       }
     }, 1200);
+  });
+
+  const clearSavedSession = $(() => {
+    recoveredOrder.value = null;
+    currentOrderId.value = "";
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.removeItem("octane_active_order");
+    }
+    currentView.value = "landing";
+  });
+
+  const resumeSavedOrder = $(() => {
+    currentView.value = "success";
   });
 
   const copyToClipboard = $((text: string, fieldName: CopiedField) => {
@@ -141,6 +194,55 @@ export default component$(() => {
       <Navbar onHome$={goToHome} />
       {/* MAIN CONTENT AREA */}
       <main class="container-wrap pt-6 pb-16 sm:pt-10 sm:pb-20 md:pt-12 md:pb-24 flex-1 flex flex-col items-center">
+        {/* Banner Pemulihan Pesanan Jika Browser Sempat Tertutup */}
+        {recoveredOrder.value &&
+          currentView.value === "landing" &&
+          showRecoveryBanner.value && (
+            <div class="mb-6 w-full max-w-4xl mx-auto rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-white">
+                    Pesanan Aktif Ditemukan (Order #
+                    {recoveredOrder.value.orderId})
+                  </div>
+                  <div class="text-[11px] text-neutral-300">
+                    Tautan aktivasi Anda tersimpan aman di browser ini dari
+                    transaksi sebelumnya.
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick$={resumeSavedOrder}
+                  class="rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Buka Tautan Saya
+                </button>
+                <button
+                  type="button"
+                  onClick$={() => (showRecoveryBanner.value = false)}
+                  class="rounded-xl border border-white/10 hover:bg-white/10 text-neutral-400 hover:text-white px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer"
+                  title="Sembunyikan Notifikasi"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
         {/* Loading overlay */}
         {isNavigating.value && <LoadingScreen />}
 
@@ -153,7 +255,6 @@ export default component$(() => {
             onToggleFaq$={toggleFaq}
           />
         )}
-
         {/* View 2: Payment */}
         {!isNavigating.value && currentView.value === "payment" && (
           <PaymentView
@@ -172,10 +273,14 @@ export default component$(() => {
         {/* View 3: Success */}
         {!isNavigating.value && currentView.value === "success" && (
           <SuccessView
-            activationLink={activeActivationLink}
+            activationLink={
+              recoveredOrder.value?.activationLink || activeActivationLink
+            }
+            orderId={currentOrderId.value || recoveredOrder.value?.orderId}
             copiedField={copiedField.value}
             onCopy$={copyToClipboard}
             onHome$={goToHome}
+            onClearSession$={clearSavedSession}
           />
         )}
       </main>
