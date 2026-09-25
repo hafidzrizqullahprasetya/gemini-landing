@@ -41,6 +41,18 @@ if (!fs.existsSync(DATA_PATH)) {
   DATA_PATH = path.resolve(__dirname, "data/links.json");
 }
 
+function getStockCount() {
+  try {
+    if (!fs.existsSync(DATA_PATH)) return 0;
+    const content = fs.readFileSync(DATA_PATH, "utf-8");
+    const links = JSON.parse(content);
+    return links.filter((l) => l.status === "available").length;
+  } catch (err) {
+    console.error("[getStockCount error]:", err);
+    return 0;
+  }
+}
+
 function getAvailableLink(orderId) {
   try {
     if (!fs.existsSync(DATA_PATH)) return null;
@@ -122,8 +134,27 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === "/api/stock" && req.method === "GET") {
+    const stock = getStockCount();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, stock }));
+    return;
+  }
+
   // Endpoint: Create QRIS Charge
   if (url.pathname === "/api/charge" && req.method === "POST") {
+    const currentStock = getStockCount();
+    if (currentStock <= 0) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          success: false,
+          message: "Stok tautan aktivasi habis",
+        })
+      );
+      return;
+    }
+
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", async () => {

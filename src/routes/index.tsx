@@ -59,6 +59,17 @@ export default component$(() => {
       }
     }
 
+    if (typeof window !== "undefined") {
+      fetch("/api/stock")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.stock === "number") {
+            availableStock.value = data.stock;
+          }
+        })
+        .catch(() => {});
+    }
+
     track(() => currentView.value);
     if (currentView.value === "payment") {
       timerSeconds.value = 900; // 15 menit (standar QRIS)
@@ -117,6 +128,7 @@ export default component$(() => {
   // Navigasi ke halaman pembayaran dengan memanggil Midtrans Core API QRIS langsung
   const goToPayment = $(async () => {
     if (isNavigating.value) return;
+    if (availableStock.value <= 0) return;
     isNavigating.value = true;
     isLoadingQr.value = true;
     statusNotice.value = null;
@@ -131,17 +143,19 @@ export default component$(() => {
       if (data && data.success) {
         currentOrderId.value = data.order_id;
         qrUrl.value = data.qr_url;
+        currentView.value = "payment";
       } else {
-        throw new Error(data?.message || "Midtrans charge error");
+        if (typeof data?.message === "string" && data.message.includes("habis")) {
+          availableStock.value = 0;
+        }
+        alert(data?.message || "Gagal membuat transaksi QRIS");
       }
     } catch (err) {
       console.error("Gagal request Midtrans QRIS:", err);
-      currentOrderId.value = `OCT-${Date.now()}`;
-      qrUrl.value = "/qris-code.svg";
+      alert("Koneksi ke server pembayaran terganggu. Silakan coba lagi.");
     } finally {
       isLoadingQr.value = false;
       isNavigating.value = false;
-      currentView.value = "payment";
     }
   });
 

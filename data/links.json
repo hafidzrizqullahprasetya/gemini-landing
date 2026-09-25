@@ -3,9 +3,9 @@
     "id": 1,
     "code": "AQCpiIFoj8yuhR_Jqr7HWD6FFlazv8o5JsNRlyqgbAFQuLTrmKUfO72fK6XDCEmlchYS-aNb9qo1zsPwqfUMudghzmM4ltMYYnDXkcCvCRwDRsUHI9fe647t0zDYc_wW8nG_yBEh6y8vO8cnxXYbE4gETehqjusUlYKmgzFRSVuMb5K8cyVRdQAGdKQc5IVdzEsK8w6oltOAlkPpJgh9pTkyR3yefbVbp0nhCMVW8gTVs6JBL9ENjaHI7w58OdqlKvTXZ4zBaIy6krRYtA==",
     "url": "https://serviceactivation.google.com/subscription/new/AQCpiIFoj8yuhR_Jqr7HWD6FFlazv8o5JsNRlyqgbAFQuLTrmKUfO72fK6XDCEmlchYS-aNb9qo1zsPwqfUMudghzmM4ltMYYnDXkcCvCRwDRsUHI9fe647t0zDYc_wW8nG_yBEh6y8vO8cnxXYbE4gETehqjusUlYKmgzFRSVuMb5K8cyVRdQAGdKQc5IVdzEsK8w6oltOAlkPpJgh9pTkyR3yefbVbp0nhCMVW8gTVs6JBL9ENjaHI7w58OdqlKvTXZ4zBaIy6krRYtA==",
-    "status": "available",
+    "status": "claimed",
     "created_at": "2026-09-25T12:00:00Z",
-    "claimed_at": null,
-    "order_id": null
+    "claimed_at": "2026-09-25T10:16:47.734Z",
+    "order_id": "OCT-1790331367523-220"
   }
 ]
