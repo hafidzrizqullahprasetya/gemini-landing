@@ -7,6 +7,7 @@ import { LoadingScreen } from "~/components/ui/loading-screen";
 import { LandingView } from "~/components/landing/landing-view";
 import { PaymentView } from "~/components/payment/payment-view";
 import { SuccessView } from "~/components/success/success-view";
+import linksData from "../../data/links.json";
 import {
   ACTIVATION_FALLBACK_LINK,
   PRODUCT_METADATA,
@@ -21,8 +22,15 @@ export default component$(() => {
   const paymentMethod = useSignal<PaymentMethod>("qris");
   const copiedField = useSignal<CopiedField | null>(null);
   const activeFaq = useSignal<number | null>(null);
+  const availableLinks = linksData.filter(
+    (item) => item.status === "available",
+  );
+  const initialStock = availableLinks.length > 0 ? availableLinks.length : 5;
+  const activeActivationLink =
+    availableLinks[0]?.url ?? ACTIVATION_FALLBACK_LINK;
+
   const timerSeconds = useSignal<number>(300); // 5 menit
-  const availableStock = useSignal<number>(5);
+  const availableStock = useSignal<number>(initialStock);
 
   // Countdown timer saat masuk ke halaman payment
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -164,7 +172,7 @@ export default component$(() => {
         {/* View 3: Success */}
         {!isNavigating.value && currentView.value === "success" && (
           <SuccessView
-            activationLink={ACTIVATION_FALLBACK_LINK}
+            activationLink={activeActivationLink}
             copiedField={copiedField.value}
             onCopy$={copyToClipboard}
             onHome$={goToHome}
