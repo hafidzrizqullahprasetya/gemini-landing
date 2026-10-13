@@ -414,6 +414,10 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["meitu", "/products/meitu.webp"],
   ["muse", "/products/muse.webp"],
   ["windows", "/products/windows11.webp"],
+  ["peacock", "/products/peacock.webp"],
+  ["higgsfield", "/products/higgsfield.webp"],
+  ["kiro", "/products/kiro.webp"],
+  ["brain", "/products/brainfm.webp"],
 ];
 
 export function cleanHtmlAndTelegramTags(text = ""): string {

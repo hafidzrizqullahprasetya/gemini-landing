@@ -251,8 +251,77 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["meitu", "/products/meitu.webp"],
   ["muse", "/products/muse.webp"],
   ["windows", "/products/windows11.webp"],
+  ["peacock", "/products/peacock.webp"],
+  ["higgsfield", "/products/higgsfield.webp"],
+  ["kiro", "/products/kiro.webp"],
+  ["brain", "/products/brainfm.webp"],
 ];
 
+function getCanonicalProductKey(item: OctaneProduct): string {
+  const lower = item.name.toLowerCase();
+  let brand = "";
+  if (lower.includes("adobe") && lower.includes("express")) {
+    brand = "adobe-express";
+  } else if (lower.includes("ilovepdf")) {
+    brand = "ilovepdf";
+  } else if (lower.includes("capcut")) {
+    brand = lower.includes("credit") ? "capcut-credits" : "capcut";
+  } else if (lower.includes("office") || lower.includes("microsoft") || lower.includes("365")) {
+    brand = "msoffice-365";
+  } else if (lower.includes("notion")) {
+    brand = "notion";
+  } else if (lower.includes("canva")) {
+    brand = lower.includes("admin") || lower.includes("invitation") ? "canva-admin" : "canva";
+  } else if (lower.includes("prime video") || lower.includes("prime")) {
+    brand = "prime-video";
+  } else if (lower.includes("claude") && lower.includes("token")) {
+    const m = lower.match(/(\d+m)\s*token/);
+    brand = `claude-token-${m ? m[1] : ""}`;
+  } else if (lower.includes("claude") && lower.includes("api")) {
+    const m = lower.match(/(\d+)\$/);
+    brand = `claude-api-${m ? m[1] : ""}`;
+  } else if (lower.includes("codex")) {
+    const m = lower.match(/(\d+m)\s*token/);
+    brand = `codex-token-${m ? m[1] : ""}`;
+  } else if (lower.includes("miro")) {
+    brand = "miro";
+  } else if (lower.includes("figma")) {
+    brand = "figma";
+  } else if (lower.includes("edx")) {
+    brand = "edx";
+  } else if (lower.includes("avira")) {
+    brand = "avira";
+  } else if (lower.includes("jetbrains")) {
+    brand = "jetbrains";
+  } else if (lower.includes("duolingo")) {
+    brand = "duolingo";
+  } else if (lower.includes("zoom")) {
+    brand = "zoom";
+  } else if (lower.includes("hma")) {
+    brand = "hma";
+  } else if (lower.includes("nord")) {
+    brand = "nordvpn";
+  } else if (lower.includes("scribd")) {
+    brand = "scribd";
+  } else if (lower.includes("wink")) {
+    brand = "wink";
+  } else if (lower.includes("gemini")) {
+    brand = "gemini";
+  } else if (lower.includes("spotify")) {
+    brand = "spotify";
+  } else if (lower.includes("netflix")) {
+    let plan = "std";
+    if (lower.includes("1p1u")) plan = "1p1u";
+    else if (lower.includes("1p2u")) plan = "1p2u";
+    else if (lower.includes("semi")) plan = "semi";
+    brand = `netflix-${plan}`;
+  } else {
+    const tokens = lower.replace(/[^a-z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+    brand = tokens[0] || "other";
+  }
+
+  return `${brand}__${item.duration_label.toUpperCase().trim()}`;
+}
 function cleanHtmlAndTelegramTags(text = ""): string {
   if (!text) return "";
   let clean = text.replace(/<tg-emoji[^>]*>(.*?)<\/tg-emoji>/gi, "$1");
@@ -411,7 +480,7 @@ export class AggregatorService {
       // If two items are duplicate: keep in-stock & cheaper retail price
       const dedupMap = new Map<string, OctaneProduct>();
       for (const item of items) {
-        const key = `${item.name.toLowerCase()}_${item.duration_label.toLowerCase()}_${item.category}`;
+        const key = getCanonicalProductKey(item);
         const existing = dedupMap.get(key);
         if (!existing) {
           dedupMap.set(key, item);
