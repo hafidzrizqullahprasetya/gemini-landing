@@ -31,8 +31,7 @@ Platform marketplace & katalog produk digital berkecepatan tinggi untuk develope
   - `components/ui/button.tsx`: Tombol interaktif cva
   - `components/ui/badge.tsx`: Label status produk
   - `components/ui/product-card-3.tsx`: Carousel drop card produk (responsif 1-3 item)
-  - `components/ui/product-drop-card.tsx`: Re-export kompatibilitas
-  - `components/ui/demo.tsx`: Demo drop card
+  - `components/ui/modal.tsx`: Dialog modal interaktif
   - `components/ComparisonSection.tsx`: Tabel keunggulan kompetitif
 - **API Reseller:**
   - Endpoint: `/api/reseller/products`
