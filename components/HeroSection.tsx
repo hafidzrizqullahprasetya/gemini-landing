@@ -1,23 +1,15 @@
+import { BrandLogoSlider } from "@/components/BrandLogoSlider";
+
 interface HeroSectionProps {
   totalProducts: number;
   inStockCount?: number;
 }
 
 export function HeroSection({ totalProducts }: HeroSectionProps) {
-  const trendingTags = [
-    "Gemini 18M",
-    "Claude API Token",
-    "ChatGPT Plus",
-    "CapCut 1600 Cr",
-    "Figma Edu",
-    "Microsoft 365",
-    "Supabase Pro",
-  ];
-
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background border-b border-border/40">
       {/* Editorial Hero Content */}
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28 sm:pb-20">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-20 pb-12 text-center sm:pt-28 sm:pb-16">
         <h1 className="w-full font-[Manrope] text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-bold leading-[1.04] sm:leading-[0.98] tracking-[-0.05em] sm:tracking-[-0.07em] text-foreground">
           Bahan bakar kerja,
           <span className="block mt-1 sm:mt-2 text-foreground">
@@ -46,31 +38,8 @@ export function HeroSection({ totalProducts }: HeroSectionProps) {
           </a>
         </div>
 
-        {/* Clean Editorial Trending List (No Box Borders) */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-muted-foreground">
-          <span className="text-foreground/80 font-semibold">Paling dicari:</span>
-          {trendingTags.map((tag, idx) => (
-            <span key={tag} className="inline-flex items-center gap-4">
-              <a
-                href="#katalog"
-                className="hover:text-primary transition-colors underline-offset-4 hover:underline"
-              >
-                {tag}
-              </a>
-              {idx < trendingTags.length - 1 && (
-                <span className="text-muted-foreground/30">·</span>
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Hongfilms Minimalist Ticker Bar */}
-      <div className="border-y border-border/40 py-3.5 text-center font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-muted-foreground/70">
-        AI Models <span className="px-3 text-primary">✦</span> Developer Tools{" "}
-        <span className="px-3 text-primary">✦</span> Creative Suite{" "}
-        <span className="px-3 text-primary">✦</span> Cloud Infra{" "}
-        <span className="px-3 text-primary">✦</span> 2-5 Menit Aktif
+        {/* Brand Logo Slider from Reference Image */}
+        <BrandLogoSlider />
       </div>
     </section>
   );
