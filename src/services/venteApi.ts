@@ -285,28 +285,37 @@ export function extractDuration(name: string, desc = ""): string {
   const combined = `${name} ${desc}`;
   if (/\blifetime\b/i.test(combined)) return "LIFETIME";
 
-  const dayMatch = combined.match(/(\d+)\s*(?:hari|days?|day)\b/i);
-  if (dayMatch && dayMatch[1]) {
-    return `${dayMatch[1]} HARI`;
-  }
-  const shortDay = combined.match(/\b(\d{1,3})\s*D\b/i);
-  if (shortDay && shortDay[1] && Number(shortDay[1]) <= 365) {
-    return `${shortDay[1]} HARI`;
-  }
-
+  // 1. Years first if in name/desc: e.g. "1 Year", "2 yrs", "12m", "1 Tahun"
   const yrMatch = combined.match(/(\d+)\s*(?:tahun|years?|year|yr|yrs)\b/i);
   if (yrMatch && yrMatch[1]) {
     return `${yrMatch[1]} TAHUN`;
   }
 
+  // 2. Months: e.g. "1 Bulan", "6 Months", "12M", "2B"
   const monthMatch = combined.match(/(\d+)\s*(?:bulan|months?|month|bln)\b/i);
   if (monthMatch && monthMatch[1]) {
     return `${monthMatch[1]} BULAN`;
   }
+
+  // 3. Days with word: e.g. "3Day", "7 Days", "30 Hari"
+  const dayMatch = combined.match(/(\d+)\s*(?:hari|days?|day)\b/i);
+  if (dayMatch && dayMatch[1]) {
+    return `${dayMatch[1]} HARI`;
+  }
+
+  // 4. Short D (e.g. 30D, 14D) - filter out 2D/3D graphics words
+  const cleanForD = combined.replace(/\b[23]D\b/gi, "").replace(/[23]D\/[23]D/gi, "");
+  const shortDay = cleanForD.match(/\b(\d{1,3})\s*D\b/i);
+  if (shortDay && shortDay[1] && Number(shortDay[1]) <= 365) {
+    return `${shortDay[1]} HARI`;
+  }
+
+  // 5. Short M (months)
   const shortM = combined.match(/\b(\d{1,2})\s*M\b(?!\s*token)/i);
   if (shortM && shortM[1] && Number(shortM[1]) <= 36) {
     return `${shortM[1]} BULAN`;
   }
+
   const shortB = combined.match(/\b(\d{1,2})\s*B\b/i);
   if (shortB && shortB[1] && Number(shortB[1]) <= 36) {
     return `${shortB[1]} BULAN`;
