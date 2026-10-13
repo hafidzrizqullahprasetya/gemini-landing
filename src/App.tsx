@@ -96,17 +96,18 @@ export default function App() {
         <FeaturedDrops
           products={products}
           onSelectProduct={setSelectedProduct}
+          lang={lang}
         />
-        <ComparisonSection />
+        <ComparisonSection lang={lang} />
         <ProductCatalog
           products={products}
           onSelectProduct={setSelectedProduct}
           lang={lang}
         />
-        <FaqSection />
+        <FaqSection lang={lang} />
       </main>
 
-      <Footer />
+      <Footer lang={lang} />
 
       <ProductModal
         product={selectedProduct}

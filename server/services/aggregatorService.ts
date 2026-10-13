@@ -176,6 +176,7 @@ function extractWarranty(name: string, desc = "", days = 0): string {
 
 const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["gemini", "/products/gemini.webp"],
+  ["google", "/products/gemini.webp"],
   ["chatgpt", "/products/chatgpt.webp"],
   ["claude", "/products/claude.webp"],
   ["codex", "/products/codex.webp"],
