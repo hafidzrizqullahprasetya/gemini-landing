@@ -134,7 +134,10 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
 });
 
 // 5d. Midtrans Webhook Notification
-app.post(["/api/octane/webhook", "/api/midtrans/notification"], async (req: Request, res: Response) => {
+app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification", "/notification"], async (req: Request, res: Response) => {
+  if (req.method === "GET") {
+    return res.json({ status: "ok", message: "Midtrans notification endpoint ready" });
+  }
   try {
     const data = req.body;
     const { order_id, status_code, gross_amount, signature_key, transaction_status } = data;
