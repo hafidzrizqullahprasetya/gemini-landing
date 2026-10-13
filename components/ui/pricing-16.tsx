@@ -60,8 +60,8 @@ export default function Pricing16({
 }: Pricing16Props) {
   return (
     <section className="bg-background py-16 sm:py-24 border-b hairline-border">
-      <div className="mx-auto max-w-4xl px-6">
-        <div className="mx-auto mb-12 max-w-lg text-center">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
           <h2 className="text-balance font-semibold text-3xl tracking-tight sm:text-4xl text-foreground font-display">
             {title}
           </h2>
@@ -70,14 +70,19 @@ export default function Pricing16({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-6",
+            plans.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2",
+          )}
+        >
           {plans.map((plan) => (
             <article
               key={plan.name}
               className={cn(
                 "relative flex flex-col gap-7 rounded-2xl border border-border bg-card p-7 transition-all duration-200",
                 plan.highlight &&
-                  "border-primary/40 ring-1 ring-primary/20 shadow-md",
+                "border-primary/40 ring-1 ring-primary/20 shadow-md",
               )}
             >
               {plan.highlight && (
@@ -131,7 +136,7 @@ export default function Pricing16({
                 asChild
                 size="lg"
                 variant={plan.highlight ? "default" : "outline"}
-                className="mt-auto w-full rounded-lg"
+                className="mt-auto w-full rounded-full cursor-pointer"
               >
                 <a href={plan.ctaHref || "#katalog"} className="flex items-center justify-center gap-2">
                   <span>{plan.cta}</span>
