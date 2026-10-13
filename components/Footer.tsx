@@ -24,7 +24,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-2 pt-1 text-xs font-mono text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>VenteBot Reseller API v1.2.0 Connected</span>
+              <span>Octane Cloud Engine v2.0 Active</span>
             </div>
           </div>
 
@@ -39,7 +39,7 @@ export function Footer() {
                   href="#katalog"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Katalog Semua Produk
+                  Katalog Produk
                 </a>
               </li>
               <li>
@@ -47,23 +47,15 @@ export function Footer() {
                   href="#drops"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Flash Drops Hari Ini
+                  Flash Drops
                 </a>
               </li>
               <li>
                 <a
-                  href="#cara-order"
+                  href="#keunggulan"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Panduan Transaksi
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#garansi"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Kebijakan Garansi & Klaim
+                  Keunggulan Octane
                 </a>
               </li>
               <li>
@@ -96,7 +88,7 @@ export function Footer() {
                 <span>WhatsApp Customer Support</span>
               </a>
               <a
-                href="https://t.me/VenteTelegramBot"
+                href="https://t.me/octanedigitalbot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border hairline-border bg-muted/40 hover:bg-muted text-xs font-medium text-foreground transition-colors"

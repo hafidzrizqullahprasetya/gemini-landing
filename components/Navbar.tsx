@@ -15,8 +15,6 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
     { label: "Katalog", href: "#katalog" },
     { label: "Flash Drops", href: "#drops" },
     { label: "Keunggulan", href: "#keunggulan" },
-    { label: "Cara Order", href: "#cara-order" },
-    { label: "Garansi", href: "#garansi" },
     { label: "FAQ", href: "#faq" },
   ];
 

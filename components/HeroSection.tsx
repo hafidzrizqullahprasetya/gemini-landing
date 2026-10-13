@@ -1,5 +1,6 @@
-import { ArrowDown, ShieldCheck, Zap, CreditCard, Sparkles, Flame } from "lucide-react";
+import { ArrowDown, ShieldCheck, Zap, CreditCard, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createBrandVectorBadge } from "@/services/venteApi";
 
 interface HeroSectionProps {
   totalProducts: number;
@@ -8,19 +9,10 @@ interface HeroSectionProps {
 
 export function HeroSection({ totalProducts, inStockCount }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden border-b hairline-border bg-gradient-to-b from-background via-background to-muted/20 py-16 sm:py-24">
+    <section className="relative overflow-hidden border-b hairline-border bg-background py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Headline and actions */}
           <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border hairline-border bg-card px-3.5 py-1 text-xs font-mono text-muted-foreground shadow-xs">
-              <span className="flex items-center gap-1 font-bold text-primary">
-                <Flame className="h-3.5 w-3.5" />
-                <span>OCTANE</span>
-              </span>
-              <span>·</span>
-              <span>BAHAN BAKAR DIGITAL</span>
-            </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground font-display leading-[1.1]">
               Bahan bakar instan untuk kerja, riset AI & coding.
@@ -51,36 +43,12 @@ export function HeroSection({ totalProducts, inStockCount }: HeroSectionProps) {
                 className="h-11 px-6 border-border text-foreground hover:bg-muted"
               >
                 <a href="#keunggulan" className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
+                  <Flame className="h-4 w-4 text-primary" />
                   <span>Keunggulan Octane</span>
                 </a>
               </Button>
             </div>
 
-            {/* Trust points */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t hairline-border">
-              <div className="flex items-start gap-2.5">
-                <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-foreground">Stok Real-Time API</p>
-                  <p className="text-[11px] text-muted-foreground">Bukan stok fiktif/manual</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-foreground">Garansi Replace Pasti</p>
-                  <p className="text-[11px] text-muted-foreground">Klaim cepat 1-klik</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <CreditCard className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-foreground">Bayar QRIS & Bank</p>
-                  <p className="text-[11px] text-muted-foreground">Bebas repot kartu kredit</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Hero Spotlight Card (Gemini 18M Highlight) */}
@@ -96,7 +64,7 @@ export function HeroSection({ totalProducts, inStockCount }: HeroSectionProps) {
               <div className="pt-4 space-y-4">
                 <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted relative">
                   <img
-                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+                    src={createBrandVectorBadge("Gemini 18 Months", "AI & LLM")}
                     alt="Gemini AI Pro 18 Bulan"
                     className="h-full w-full object-cover"
                   />

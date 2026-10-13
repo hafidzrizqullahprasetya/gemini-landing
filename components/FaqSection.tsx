@@ -7,7 +7,7 @@ export function FaqSection() {
   const faqs = [
     {
       q: "Apakah akun yang disediakan siap pakai dan aman digunakan?",
-      a: "Ya. Setiap produk dipasok langsung dari server VenteBot yang telah teruji. Jenis pengiriman bervariasi antara akun baru siap login, tautan aktivasi mandiri (invite), atau lisensi resmi.",
+      a: "Ya. Setiap produk diproses langsung melalui sistem aktivasi Octane Cloud yang telah teruji. Jenis pengiriman bervariasi antara akun baru siap login, tautan aktivasi mandiri (invite), atau lisensi resmi.",
     },
     {
       q: "Bagaimana cara membaca kode 2FA saat login akun Google atau OpenAI?",
@@ -63,9 +63,8 @@ export function FaqSection() {
                     {faq.q}
                   </span>
                   <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-foreground" : ""
-                    }`}
+                    className={`h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-foreground" : ""
+                      }`}
                   />
                 </button>
 

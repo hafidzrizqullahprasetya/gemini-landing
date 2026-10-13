@@ -37,7 +37,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   );
 
   const waLink = `https://wa.me/6285179927909?text=${waMessage}`;
-  const tgLink = `https://t.me/VenteTelegramBot?start=order_${product.id}`;
+  const tgLink = `https://t.me/octanedigitalbot?start=order_${product.id}`;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(

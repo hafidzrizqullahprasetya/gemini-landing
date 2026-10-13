@@ -4,8 +4,6 @@ import { HeroSection } from "@/components/HeroSection";
 import { FeaturedDrops } from "@/components/FeaturedDrops";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { ProductCatalog } from "@/components/ProductCatalog";
-import { OrderGuide } from "@/components/OrderGuide";
-import { WarrantySection } from "@/components/WarrantySection";
 import { FaqSection } from "@/components/FaqSection";
 import { Footer } from "@/components/Footer";
 import { ProductModal } from "@/components/ProductModal";
@@ -84,8 +82,6 @@ export default function App() {
           products={products}
           onSelectProduct={setSelectedProduct}
         />
-        <OrderGuide />
-        <WarrantySection />
         <FaqSection />
       </main>
 

@@ -5,7 +5,7 @@ export interface VenteProduct {
   name: string;
   description: string;
   emoji: string;
-  image_url: string;
+  image_url: string | null;
   price_usd: number;
   warranty_days: number;
   delivery_type: string;
@@ -127,47 +127,6 @@ const CATEGORY_MAP: Record<Exclude<ProductCategory, "Semua">, string[]> = {
   ],
 };
 
-const BRAND_IMAGES: Record<string, string> = {
-  gemini:
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-  chatgpt:
-    "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80",
-  claude:
-    "https://images.unsplash.com/photo-1618172193763-c511deb635ca?auto=format&fit=crop&w=800&q=80",
-  grok:
-    "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=800&q=80",
-  capcut:
-    "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80",
-  canva:
-    "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80",
-  figma:
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-  framer:
-    "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80",
-  notion:
-    "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80",
-  microsoft:
-    "https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=800&q=80",
-  youtube:
-    "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=80",
-  netflix:
-    "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=800&q=80",
-  apple:
-    "https://images.unsplash.com/photo-1510519138161-58444c424330?auto=format&fit=crop&w=800&q=80",
-  prime:
-    "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&w=800&q=80",
-  nordvpn:
-    "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80",
-  coursera:
-    "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80",
-  duolingo:
-    "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=800&q=80",
-  supabase:
-    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80",
-  railway:
-    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-};
-
 export function detectCategory(name: string): Exclude<ProductCategory, "Semua"> {
   const lower = name.toLowerCase();
   for (const [cat, keywords] of Object.entries(CATEGORY_MAP)) {
@@ -178,23 +137,116 @@ export function detectCategory(name: string): Exclude<ProductCategory, "Semua"> 
   return "Dev & Cloud";
 }
 
-export function detectFallbackImage(name: string, category: string): string {
+export function createBrandVectorBadge(name: string, category: string): string {
   const lower = name.toLowerCase();
-  for (const [key, img] of Object.entries(BRAND_IMAGES)) {
-    if (lower.includes(key)) {
-      return img;
-    }
+  let accent = "#ea580c"; // Octane Flame
+  let tag = "OCTANE";
+  let monogram = "AI";
+
+  if (lower.includes("gemini") || lower.includes("google")) {
+    accent = "#3b82f6";
+    tag = "GOOGLE AI";
+    monogram = "GE";
+  } else if (lower.includes("chatgpt") || lower.includes("gpt")) {
+    accent = "#10b981";
+    tag = "OPENAI";
+    monogram = "GPT";
+  } else if (lower.includes("claude") || lower.includes("anthropic")) {
+    accent = "#d97706";
+    tag = "ANTHROPIC";
+    monogram = "CL";
+  } else if (lower.includes("grok")) {
+    accent = "#e2e8f0";
+    tag = "X GROK";
+    monogram = "X";
+  } else if (lower.includes("capcut")) {
+    accent = "#0284c7";
+    tag = "BYTEDANCE";
+    monogram = "CC";
+  } else if (lower.includes("canva")) {
+    accent = "#06b6d4";
+    tag = "CANVA PRO";
+    monogram = "CV";
+  } else if (lower.includes("figma")) {
+    accent = "#8b5cf6";
+    tag = "FIGMA EDU";
+    monogram = "FG";
+  } else if (lower.includes("framer")) {
+    accent = "#ec4899";
+    tag = "FRAMER PRO";
+    monogram = "FR";
+  } else if (lower.includes("microsoft") || lower.includes("office")) {
+    accent = "#2563eb";
+    tag = "MICROSOFT";
+    monogram = "MS";
+  } else if (lower.includes("notion")) {
+    accent = "#64748b";
+    tag = "NOTION";
+    monogram = "NO";
+  } else if (lower.includes("supabase")) {
+    accent = "#10b981";
+    tag = "SUPABASE";
+    monogram = "SB";
+  } else if (lower.includes("railway")) {
+    accent = "#7c3aed";
+    tag = "RAILWAY";
+    monogram = "RW";
+  } else if (lower.includes("linear")) {
+    accent = "#6366f1";
+    tag = "LINEAR";
+    monogram = "LN";
+  } else if (lower.includes("coursera")) {
+    accent = "#2563eb";
+    tag = "COURSERA";
+    monogram = "CS";
+  } else if (lower.includes("duolingo")) {
+    accent = "#22c55e";
+    tag = "DUOLINGO";
+    monogram = "DL";
+  } else if (lower.includes("zoom")) {
+    accent = "#0284c7";
+    tag = "ZOOM PRO";
+    monogram = "ZM";
+  } else if (lower.includes("vpn") || lower.includes("nord") || lower.includes("proton")) {
+    accent = "#06b6d4";
+    tag = "SECURE VPN";
+    monogram = "VPN";
+  } else if (lower.includes("netflix") || lower.includes("stream") || lower.includes("tv")) {
+    accent = "#e11d48";
+    tag = "STREAMING";
+    monogram = "TV";
+  } else if (lower.includes("youtube")) {
+    accent = "#ef4444";
+    tag = "YOUTUBE";
+    monogram = "YT";
+  } else {
+    const words = name.replace(/[^a-zA-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+    monogram = (words[0]?.[0] || "O") + (words[1]?.[0] || "P");
+    tag = category.toUpperCase();
   }
-  if (category === "AI & LLM") {
-    return "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80";
-  }
-  if (category === "Desain & Kreatif") {
-    return "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=800&q=80";
-  }
-  if (category === "Streaming & Hiburan") {
-    return "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80";
-  }
-  return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80";
+
+  const cleanTitle = name
+    .slice(0, 24)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#151824" />
+      <stop offset="100%" stop-color="#090a0f" />
+    </linearGradient>
+  </defs>
+  <rect width="480" height="280" rx="14" fill="url(#g)" />
+  <rect x="1" y="1" width="478" height="278" rx="13" fill="none" stroke="${accent}" stroke-opacity="0.35" stroke-width="1.5" />
+  <circle cx="240" cy="110" r="46" fill="${accent}" fill-opacity="0.12" stroke="${accent}" stroke-opacity="0.4" stroke-width="1.5" />
+  <text x="240" y="121" text-anchor="middle" font-family="monospace" font-size="26" font-weight="bold" fill="${accent}">${monogram}</text>
+  <text x="240" y="195" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">${cleanTitle}</text>
+  <text x="240" y="224" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="${accent}" letter-spacing="2">${tag}</text>
+</svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 export function extractDuration(name: string, desc: string): string {
@@ -244,11 +296,8 @@ export function enrichProduct(raw: VenteProduct): EnrichedProduct {
   const rawIdr = raw.price_usd * rate;
   const price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
 
-  const display_image =
-    raw.image_url && !raw.image_url.includes("placeholder")
-      ? raw.image_url
-      : detectFallbackImage(raw.name, category);
-
+  // Vector badge generated instantly per brand & category without external image latency
+  const display_image = createBrandVectorBadge(raw.name, category);
   return {
     ...raw,
     category,
@@ -264,7 +313,7 @@ export function enrichProduct(raw: VenteProduct): EnrichedProduct {
 export const initialEnrichedProducts: EnrichedProduct[] = (
   rawProducts as VenteProduct[]
 )
-  .filter((p) => p.id !== 2147483000) // Filter out the internal test product
+  .filter((p) => p.id !== 2147483000)
   .map(enrichProduct);
 
 export async function fetchLiveProducts(): Promise<EnrichedProduct[]> {
@@ -283,7 +332,7 @@ export async function fetchLiveProducts(): Promise<EnrichedProduct[]> {
       }
     }
   } catch {
-    // Silent fallback to local cache
+    // Silent fallback to initial cache
   }
   return initialEnrichedProducts;
 }

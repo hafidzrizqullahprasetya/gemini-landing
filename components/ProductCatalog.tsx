@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, Filter, ArrowUpDown, Check, AlertCircle, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { EnrichedProduct, ProductCategory } from "@/services/venteApi";
+import { createBrandVectorBadge, type EnrichedProduct, type ProductCategory } from "@/services/venteApi";
 
 interface ProductCatalogProps {
   products: EnrichedProduct[];
@@ -74,7 +74,7 @@ export function ProductCatalog({
           <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-semibold uppercase tracking-wider">
             <span>Katalog Produk</span>
             <span>·</span>
-            <span>Reseller VenteBot</span>
+            <span>Katalog Resmi Octane</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground font-display mt-1">
             Daftar Produk Digital
@@ -224,6 +224,9 @@ export function ProductCatalog({
                       src={product.display_image}
                       alt={product.name}
                       loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = createBrandVectorBadge(product.name, product.category);
+                      }}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
 
