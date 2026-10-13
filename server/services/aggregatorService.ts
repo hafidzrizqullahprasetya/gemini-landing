@@ -499,8 +499,14 @@ export class AggregatorService {
         }
       }
 
+      const isGemini = (name: string) => name.toLowerCase().includes("gemini");
       const deduplicated = Array.from(dedupMap.values());
       deduplicated.sort((a, b) => {
+        const aGemini = isGemini(a.name);
+        const bGemini = isGemini(b.name);
+        if (aGemini !== bGemini) {
+          return aGemini ? -1 : 1;
+        }
         if (a.is_in_stock !== b.is_in_stock) {
           return a.is_in_stock ? -1 : 1;
         }

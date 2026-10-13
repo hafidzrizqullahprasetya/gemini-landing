@@ -52,13 +52,32 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
-    fetchLiveProducts().then((live: EnrichedProduct[]) => {
-      if (isMounted && live.length > 0) {
-        setProducts(live);
+
+    const syncLiveProducts = () => {
+      fetchLiveProducts().then((live: EnrichedProduct[]) => {
+        if (isMounted && live.length > 0) {
+          setProducts(live);
+        }
+      });
+    };
+
+    syncLiveProducts();
+
+    // Auto-sync real-time stock every 45 seconds
+    const interval = setInterval(syncLiveProducts, 45000);
+
+    // Refresh immediately when customer switches back to this tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncLiveProducts();
       }
-    });
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

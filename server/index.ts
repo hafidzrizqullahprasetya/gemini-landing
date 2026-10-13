@@ -1,6 +1,8 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import path from "node:path";
+import fs from "node:fs";
 import { config } from "./config";
 import { AggregatorService } from "./services/aggregatorService";
 import { OrderService } from "./services/orderService";
@@ -111,6 +113,15 @@ app.post("/api/octane/refresh", async (_req: Request, res: Response) => {
   }
 });
 
+// 7. Serve Static Frontend SPA in production if dist/ exists
+const distPath = path.resolve(process.cwd(), "dist");
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.use((req: Request, res: Response, next) => {
+    if (req.path.startsWith("/api/")) return next();
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
 // Start listening if run as main script or CLI
 const PORT = config.port;
 const isDirectExecution =

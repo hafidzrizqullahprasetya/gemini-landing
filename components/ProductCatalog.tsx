@@ -117,14 +117,14 @@ export function ProductCatalog({
                 type="button"
                 onClick={() => setOnlyInStock(!onlyInStock)}
                 className={`h-11 px-4 rounded-full border border-border/50 text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer ${onlyInStock
-                  ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-card text-muted-foreground hover:text-foreground"
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <div
                   className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${onlyInStock
-                    ? "bg-primary border-primary text-primary-foreground"
-                    : "border-muted-foreground"
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "border-muted-foreground"
                     }`}
                 >
                   {onlyInStock && <Check className="h-2.5 w-2.5" />}
@@ -171,8 +171,8 @@ export function ProductCatalog({
                     setVisibleCount(24);
                   }}
                   className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${selectedCategory === cat
-                    ? "bg-foreground text-background shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                 >
                   <span>{label}</span>
@@ -194,13 +194,14 @@ export function ProductCatalog({
               : `Found ${filteredProducts.length} products${selectedCategory !== "Semua" ? ` in "${selectedCategory}"` : ""
               }`}
           </span>
-          {onlyInStock && (
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>
               {lang === "id"
-                ? "Menyaring produk yang siap diaktivasi"
-                : "Showing products ready for instant activation"}
+                ? "Sinkronisasi Stok Real-time Aktif"
+                : "Real-time Stock Live Sync Active"}
             </span>
-          )}
+          </div>
         </div>
 
         {/* Product Cards Grid */}
@@ -224,89 +225,103 @@ export function ProductCatalog({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {displayedProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group rounded-2xl border border-border/50 bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:border-border hover:shadow-lg"
-              >
-                <div>
-                  {/* Thumbnail & Badges */}
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/30">
-                    <img
-                      src={product.display_image || createBrandVectorBadge(product.name, product.category)}
-                      alt={product.name}
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.src = createBrandVectorBadge(product.name, product.category);
-                      }}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
+            {displayedProducts.map((product) => {
+              const isGeminiProduct = product.name.toLowerCase().includes("gemini");
+              return (
+                <div
+                  key={product.id}
+                  className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-lg ${isGeminiProduct
+                      ? "border-primary/50 ring-1 ring-primary/20 shadow-sm"
+                      : "border-border/50 hover:border-border"
+                    }`}
+                >
+                  <div>
+                    {/* Thumbnail & Badges */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/30">
+                      <img
+                        src={product.display_image || createBrandVectorBadge(product.name, product.category)}
+                        alt={product.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = createBrandVectorBadge(product.name, product.category);
+                        }}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
 
-                    {/* Duration badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-background/90 backdrop-blur-sm px-2.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider text-foreground">
-                      {localizeDuration(product.duration_label, lang)}
+                      {/* Duration & Gemini highlight */}
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                        <div className="bg-background/90 backdrop-blur-sm px-2.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider text-foreground">
+                          {localizeDuration(product.duration_label, lang)}
+                        </div>
+                        {isGeminiProduct && (
+                          <span className="bg-primary text-primary-foreground font-mono font-bold text-[10px] px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                            <span>🔥</span>
+                            <span>{lang === "id" ? "BEST SELLER" : "HOT"}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Stock badge */}
+                      <div className="absolute top-2.5 right-2.5">
+                        {product.is_in_stock ? (
+                          <span className="bg-emerald-500/90 text-white backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono font-medium">
+                            {t.ready} ({product.stock})
+                          </span>
+                        ) : (
+                          <span className="bg-muted text-muted-foreground backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono">
+                            {t.outOfStock}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Stock badge */}
-                    <div className="absolute top-2.5 right-2.5">
-                      {product.is_in_stock ? (
-                        <span className="bg-emerald-500/90 text-white backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono font-medium">
-                          {t.ready} ({product.stock})
+                    {/* Card Content */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
+                        <span>{localizeCategory(product.category, lang)}</span>
+                        <span>{localizeWarranty(product.warranty_label, lang)}</span>
+                      </div>
+
+                      <h3 className="font-semibold text-foreground text-base tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]">
+                        {product.name}
+                      </h3>
+
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {product.description.replace(/[🤖⭐️✦🚫⏩🚀💎🔑⚡⏳📋🔹✨🌐📊📖⚠️🔗👉•-]/g, "").trim()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer: Price and CTA */}
+                  <div className="p-4 pt-0 mt-2 border-t border-border/40">
+                    <div className="flex items-baseline justify-between pt-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground block text-[10px] uppercase font-mono">
+                          {lang === "id" ? "Harga Satuan" : "Unit Price"}
                         </span>
-                      ) : (
-                        <span className="bg-muted text-muted-foreground backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono">
-                          {t.outOfStock}
+                        <span className="text-base font-bold font-mono text-primary">
+                          {product.formatted_price}
+                        </span>
+                      </div>
+
+                      {product.price_usd && (
+                        <span className="text-[11px] font-mono text-muted-foreground">
+                          ${product.price_usd} USD
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Card Content */}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
-                      <span>{localizeCategory(product.category, lang)}</span>
-                      <span>{localizeWarranty(product.warranty_label, lang)}</span>
-                    </div>
-
-                    <h3 className="font-semibold text-foreground text-base tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]">
-                      {product.name}
-                    </h3>
-
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {product.description.replace(/[🤖⭐️✦🚫⏩🚀💎🔑⚡⏳📋🔹✨🌐📊📖⚠️🔗👉•-]/g, "").trim()}
-                    </p>
+                    <Button
+                      onClick={() => onSelectProduct(product)}
+                      className="w-full mt-3 h-10 text-xs font-medium rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                      <span>{t.orderNow}</span>
+                    </Button>
                   </div>
                 </div>
-
-                {/* Footer: Price and CTA */}
-                <div className="p-4 pt-0 mt-2 border-t border-border/40">
-                  <div className="flex items-baseline justify-between pt-3">
-                    <div>
-                      <span className="text-xs text-muted-foreground block text-[10px] uppercase font-mono">
-                        {lang === "id" ? "Harga Satuan" : "Unit Price"}
-                      </span>
-                      <span className="text-base font-bold font-mono text-primary">
-                        {product.formatted_price}
-                      </span>
-                    </div>
-
-                    {product.price_usd && (
-                      <span className="text-[11px] font-mono text-muted-foreground">
-                        ${product.price_usd} USD
-                      </span>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => onSelectProduct(product)}
-                    className="w-full mt-3 h-10 text-xs font-medium rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                  >
-                    <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                    <span>{t.orderNow}</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
