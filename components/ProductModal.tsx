@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedProduct } from "@/services/venteApi";
 import type { Language } from "@/lib/i18n";
-import { translations } from "@/lib/i18n";
+import { translations, localizeCategory, localizeDuration, localizeWarranty } from "@/lib/i18n";
 import {
   ShieldCheck,
   Zap,
@@ -109,7 +109,7 @@ export function ProductModal({
       isOpen={isOpen}
       onClose={onClose}
       title={product.name}
-      description={`${t.categoryLabel}: ${product.category} · ${t.idLabel}: #${product.id}`}
+      description={`${t.categoryLabel}: ${localizeCategory(product.category, lang)} · ${t.idLabel}: #${product.id}`}
       className="max-w-2xl"
     >
       <div className="space-y-6 pt-1">
@@ -123,7 +123,7 @@ export function ProductModal({
               className="h-full w-full object-cover"
             />
             <div className="absolute top-2.5 left-2.5 bg-background/90 backdrop-blur-md px-2.5 py-0.5 rounded text-[11px] font-mono font-bold text-foreground">
-              {product.duration_label}
+              {localizeDuration(product.duration_label, lang)}
             </div>
           </div>
 
@@ -160,7 +160,7 @@ export function ProductModal({
                 <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
                 <div>
                   <span className="text-muted-foreground mr-1.5">{t.warranty}:</span>
-                  <span className="font-semibold">{product.warranty_label}</span>
+                  <span className="font-semibold">{localizeWarranty(product.warranty_label, lang)}</span>
                 </div>
               </div>
 
@@ -176,7 +176,7 @@ export function ProductModal({
                 <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                 <div>
                   <span className="text-muted-foreground mr-1.5">{t.duration}:</span>
-                  <span className="font-semibold">{product.duration_label}</span>
+                  <span className="font-semibold">{localizeDuration(product.duration_label, lang)}</span>
                 </div>
               </div>
             </div>

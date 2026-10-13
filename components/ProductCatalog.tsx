@@ -3,7 +3,7 @@ import { Search, ArrowUpDown, Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createBrandVectorBadge, type EnrichedProduct, type ProductCategory } from "@/services/venteApi";
 import type { Language } from "@/lib/i18n";
-import { translations } from "@/lib/i18n";
+import { translations, localizeCategory, localizeDuration, localizeWarranty } from "@/lib/i18n";
 
 interface ProductCatalogProps {
   products: EnrichedProduct[];
@@ -117,14 +117,14 @@ export function ProductCatalog({
                 type="button"
                 onClick={() => setOnlyInStock(!onlyInStock)}
                 className={`h-11 px-4 rounded-full border border-border/50 text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer ${onlyInStock
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "bg-card text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-card text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <div
                   className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${onlyInStock
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-muted-foreground"
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-muted-foreground"
                     }`}
                 >
                   {onlyInStock && <Check className="h-2.5 w-2.5" />}
@@ -161,7 +161,7 @@ export function ProductCatalog({
                 cat === "Semua"
                   ? products.length
                   : products.filter((p) => p.category === cat).length;
-              const label = cat === "Semua" ? t.allCategories : cat;
+              const label = localizeCategory(cat, lang);
               return (
                 <button
                   key={cat}
@@ -171,8 +171,8 @@ export function ProductCatalog({
                     setVisibleCount(24);
                   }}
                   className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${selectedCategory === cat
-                      ? "bg-foreground text-background shadow-sm"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                 >
                   <span>{label}</span>
@@ -243,8 +243,8 @@ export function ProductCatalog({
                     />
 
                     {/* Duration badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-background/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider text-foreground">
-                      {product.duration_label}
+                    <div className="absolute top-2.5 left-2.5 bg-background/90 backdrop-blur-sm px-2.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider text-foreground">
+                      {localizeDuration(product.duration_label, lang)}
                     </div>
 
                     {/* Stock badge */}
@@ -264,8 +264,8 @@ export function ProductCatalog({
                   {/* Card Content */}
                   <div className="p-4 space-y-2">
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
-                      <span>{product.category}</span>
-                      <span>{product.warranty_label}</span>
+                      <span>{localizeCategory(product.category, lang)}</span>
+                      <span>{localizeWarranty(product.warranty_label, lang)}</span>
                     </div>
 
                     <h3 className="font-semibold text-foreground text-base tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]">

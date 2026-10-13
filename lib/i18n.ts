@@ -227,3 +227,43 @@ export const translations: Record<Language, Translations> = {
     },
   },
 };
+
+export function localizeDuration(dur = "", lang: Language): string {
+  if (lang === "id") return dur;
+  let res = dur;
+  res = res.replace(/\bHARI\b/gi, "DAYS");
+  res = res.replace(/\bBULAN\b/gi, "MONTHS");
+  res = res.replace(/\bTAHUN\b/gi, "YEARS");
+  res = res.replace(/\b1 DAYS\b/gi, "1 DAY");
+  res = res.replace(/\b1 MONTHS\b/gi, "1 MONTH");
+  res = res.replace(/\b1 YEARS\b/gi, "1 YEAR");
+  return res;
+}
+
+export function localizeWarranty(warr = "", lang: Language): string {
+  if (lang === "id") return warr;
+  if (/full/i.test(warr)) return "Full Warranty";
+  if (/24 jam/i.test(warr)) return "24-Hour Warranty";
+  if (/non-garansi/i.test(warr)) return "No Warranty";
+  const m = warr.match(/(\d+)\s*Hari/i);
+  if (m) return `${m[1]}-Day Warranty`;
+  return "Official Warranty";
+}
+
+export function localizeCategory(cat = "", lang: Language): string {
+  if (lang === "id") return cat;
+  switch (cat) {
+    case "Semua":
+      return "All";
+    case "Desain & Kreatif":
+      return "Design & Creative";
+    case "Office & Edu":
+      return "Office & Education";
+    case "Streaming & Hiburan":
+      return "Streaming & Entertainment";
+    case "VPN & Sistem":
+      return "VPN & Security";
+    default:
+      return cat;
+  }
+}

@@ -232,7 +232,59 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["arize", "/products/arize.webp"],
   ["grok", "/products/grok.webp"],
   ["coursera", "/products/coursera.webp"],
+  ["netflix", "/products/netflix.webp"],
+  ["canva", "/products/canva.webp"],
+  ["spotify", "/products/spotify.webp"],
+  ["gmail", "/products/gmail.webp"],
+  ["outlook", "/products/gmail.webp"],
+  ["cursor", "/products/cursor.webp"],
+  ["expressvpn", "/products/expressvpn.webp"],
+  ["proton", "/products/proton.webp"],
+  ["alight", "/products/alight-motion.webp"],
+  ["hbo", "/products/hbo-max.webp"],
+  ["quillbot", "/products/quillbot.webp"],
+  ["runway", "/products/runway.webp"],
+  ["trading", "/products/tradingview.webp"],
+  ["edx", "/products/edx.webp"],
+  ["wispr", "/products/wispr-flow.webp"],
+  ["meitu", "/products/meitu.webp"],
+  ["muse", "/products/muse.webp"],
+  ["windows", "/products/windows11.webp"],
 ];
+
+function cleanHtmlAndTelegramTags(text = ""): string {
+  if (!text) return "";
+  let clean = text.replace(/<tg-emoji[^>]*>(.*?)<\/tg-emoji>/gi, "$1");
+  clean = clean.replace(/<[^>]+>/g, "");
+  clean = clean.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+  clean = clean.replace(/[━─=\-]{4,}/g, "");
+  clean = clean.replace(/🛍️\s*PRODUCT INFORMATION/gi, "");
+  return clean.trim();
+}
+
+function cleanProductName(name: string): string {
+  let clean = cleanHtmlAndTelegramTags(name);
+  clean = clean.replace(/\bCLaude\b/g, "Claude");
+  clean = clean.replace(/\bChatgpt\b/gi, "ChatGPT");
+  clean = clean.replace(/\bCapcut\b/gi, "CapCut");
+  clean = clean.replace(/^[🔑⚡🛍️🔹✨👑🚀]\s*/, "");
+  clean = clean.replace(/^Slot\s*-\s*/i, "");
+  clean = clean.replace(/^Key\s*🔑?\s*/i, "");
+
+  // Normalize API Token and Balance titles
+  const mBal = clean.match(/(\d+)\$\s*API\s*Claude\s*[-–—]?\s*(\d+)\s*(?:days?|day)/i);
+  if (mBal) {
+    return `Claude API $${mBal[1]} Balance (${mBal[2]} Hari)`;
+  }
+  const mTok = clean.match(/API\s*(CLAUDE|CODEX)\s*[-–—]?\s*(\d+M)\s*Token\s*[-–—]?\s*(\d+)\s*(?:days?|day)/i);
+  if (mTok) {
+    const brand = mTok[1].toUpperCase() === "CLAUDE" ? "Claude" : "Codex";
+    return `${brand} API ${mTok[2]} Token (${mTok[3]} Hari)`;
+  }
+
+  clean = clean.replace(/\s*\((?:BHF|FW|NW|W\d+D|W\d+H)\)/g, "");
+  return clean.trim();
+}
 
 function getDisplayImage(name: string): string {
   const lower = name.toLowerCase();
@@ -259,7 +311,9 @@ export class AggregatorService {
   private static isFetching = false;
 
   private static transformVente(raw: VenteRawProduct): OctaneProduct {
-    const category = detectCategory(raw.name);
+    const name = cleanProductName(raw.name);
+    const description = cleanHtmlAndTelegramTags(raw.description);
+    const category = detectCategory(name);
     const rawIdr = raw.price_usd * config.vente.usdRate;
     const price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
 
@@ -267,8 +321,8 @@ export class AggregatorService {
       id: `v-${raw.id}`,
       supplier: "vente",
       supplier_product_id: raw.id,
-      name: raw.name,
-      description: raw.description || "",
+      name,
+      description,
       category,
       price_idr,
       formatted_price: formatIDR(price_idr),
@@ -276,17 +330,18 @@ export class AggregatorService {
       original_currency: "USD",
       stock: raw.stock,
       is_in_stock: raw.stock > 0,
-      duration_label: extractDuration(raw.name, raw.description),
-      warranty_label: extractWarranty(raw.name, raw.description, raw.warranty_days),
-      display_image: getDisplayImage(raw.name),
+      duration_label: extractDuration(name, description),
+      warranty_label: extractWarranty(name, description, raw.warranty_days),
+      display_image: getDisplayImage(name),
       requires_email: raw.delivery_type === "custom_email",
       delivery_type: raw.delivery_type === "custom_email" ? "custom_email" : "instant",
     };
   }
 
   private static transformRezeki(raw: RezekiRawProduct): OctaneProduct {
-    const category = detectCategory(raw.name);
-    // 15% markup rounded to nearest 500, minimum minPriceIdr (Rp 8.500)
+    const name = cleanProductName(raw.name);
+    const description = cleanHtmlAndTelegramTags(raw.description);
+    const category = detectCategory(name);
     const cost = raw.price_idr;
     const price_idr = Math.max(
       config.rezeki.minPriceIdr,
@@ -298,8 +353,8 @@ export class AggregatorService {
       id: `r-${raw.id}`,
       supplier: "rezeki",
       supplier_product_id: raw.id,
-      name: raw.name.trim(),
-      description: raw.description || "",
+      name,
+      description,
       category,
       price_idr,
       formatted_price: formatIDR(price_idr),
@@ -307,9 +362,9 @@ export class AggregatorService {
       original_currency: "IDR",
       stock: inStock ? 10 : 0,
       is_in_stock: inStock,
-      duration_label: extractDuration(raw.name, raw.description),
-      warranty_label: extractWarranty(raw.name, raw.description, 0),
-      display_image: getDisplayImage(raw.name),
+      duration_label: extractDuration(name, description),
+      warranty_label: extractWarranty(name, description, 0),
+      display_image: getDisplayImage(name),
       requires_email: Boolean(raw.requires_email),
       delivery_type: raw.requires_email ? "custom_email" : "instant",
     };
@@ -350,15 +405,33 @@ export class AggregatorService {
         rezekiRes.value.forEach((p) => items.push(this.transformRezeki(p)));
       }
 
-      // Sort: in stock first, then by category and name
-      items.sort((a, b) => {
+      // Smart Deduplication:
+      // Group by normalized name + duration + category
+      // If two items are duplicate: keep in-stock & cheaper retail price
+      const dedupMap = new Map<string, OctaneProduct>();
+      for (const item of items) {
+        const key = `${item.name.toLowerCase()}_${item.duration_label.toLowerCase()}_${item.category}`;
+        const existing = dedupMap.get(key);
+        if (!existing) {
+          dedupMap.set(key, item);
+        } else {
+          if (!existing.is_in_stock && item.is_in_stock) {
+            dedupMap.set(key, item);
+          } else if (existing.is_in_stock === item.is_in_stock && item.price_idr < existing.price_idr) {
+            dedupMap.set(key, item);
+          }
+        }
+      }
+
+      const deduplicated = Array.from(dedupMap.values());
+      deduplicated.sort((a, b) => {
         if (a.is_in_stock !== b.is_in_stock) {
           return a.is_in_stock ? -1 : 1;
         }
         return a.name.localeCompare(b.name);
       });
 
-      this.cachedProducts = items;
+      this.cachedProducts = deduplicated;
       this.lastFetchTime = Date.now();
     } catch (err) {
       console.error("[Aggregator] Error fetching supplier products:", err);

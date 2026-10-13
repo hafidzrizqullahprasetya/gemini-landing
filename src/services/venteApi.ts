@@ -396,7 +396,58 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["azure", "/products/arize.webp"],
   ["grok", "/products/grok.webp"],
   ["coursera", "/products/coursera.webp"],
+  ["netflix", "/products/netflix.webp"],
+  ["canva", "/products/canva.webp"],
+  ["spotify", "/products/spotify.webp"],
+  ["gmail", "/products/gmail.webp"],
+  ["outlook", "/products/gmail.webp"],
+  ["cursor", "/products/cursor.webp"],
+  ["expressvpn", "/products/expressvpn.webp"],
+  ["proton", "/products/proton.webp"],
+  ["alight", "/products/alight-motion.webp"],
+  ["hbo", "/products/hbo-max.webp"],
+  ["quillbot", "/products/quillbot.webp"],
+  ["runway", "/products/runway.webp"],
+  ["trading", "/products/tradingview.webp"],
+  ["edx", "/products/edx.webp"],
+  ["wispr", "/products/wispr-flow.webp"],
+  ["meitu", "/products/meitu.webp"],
+  ["muse", "/products/muse.webp"],
+  ["windows", "/products/windows11.webp"],
 ];
+
+export function cleanHtmlAndTelegramTags(text = ""): string {
+  if (!text) return "";
+  let clean = text.replace(/<tg-emoji[^>]*>(.*?)<\/tg-emoji>/gi, "$1");
+  clean = clean.replace(/<[^>]+>/g, "");
+  clean = clean.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+  clean = clean.replace(/[━─=\-]{4,}/g, "");
+  clean = clean.replace(/🛍️\s*PRODUCT INFORMATION/gi, "");
+  return clean.trim();
+}
+
+export function cleanProductName(name: string): string {
+  let clean = cleanHtmlAndTelegramTags(name);
+  clean = clean.replace(/\bCLaude\b/g, "Claude");
+  clean = clean.replace(/\bChatgpt\b/gi, "ChatGPT");
+  clean = clean.replace(/\bCapcut\b/gi, "CapCut");
+  clean = clean.replace(/^[🔑⚡🛍️🔹✨👑🚀]\s*/, "");
+  clean = clean.replace(/^Slot\s*-\s*/i, "");
+  clean = clean.replace(/^Key\s*🔑?\s*/i, "");
+
+  const mBal = clean.match(/(\d+)\$\s*API\s*Claude\s*[-–—]?\s*(\d+)\s*(?:days?|day)/i);
+  if (mBal) {
+    return `Claude API $${mBal[1]} Balance (${mBal[2]} Hari)`;
+  }
+  const mTok = clean.match(/API\s*(CLAUDE|CODEX)\s*[-–—]?\s*(\d+M)\s*Token\s*[-–—]?\s*(\d+)\s*(?:days?|day)/i);
+  if (mTok) {
+    const brand = mTok[1].toUpperCase() === "CLAUDE" ? "Claude" : "Codex";
+    return `${brand} API ${mTok[2]} Token (${mTok[3]} Hari)`;
+  }
+
+  clean = clean.replace(/\s*\((?:BHF|FW|NW|W\d+D|W\d+H)\)/g, "");
+  return clean.trim();
+}
 
 export function getProductDisplayImage(name: string, category: string): string {
   const lower = name.toLowerCase();
@@ -418,7 +469,9 @@ export function formatIDR(amount: number): string {
 }
 
 export function enrichProduct(raw: VenteProduct & { price_idr?: number }): EnrichedProduct {
-  const category = detectCategory(raw.name);
+  const name = cleanProductName(raw.name);
+  const description = cleanHtmlAndTelegramTags(raw.description);
+  const category = detectCategory(name);
   let price_idr = raw.price_idr;
   if (!price_idr || price_idr <= 0) {
     const rate = 16800;
@@ -426,15 +479,17 @@ export function enrichProduct(raw: VenteProduct & { price_idr?: number }): Enric
     price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
   }
 
-  const display_image = getProductDisplayImage(raw.name, category);
+  const display_image = getProductDisplayImage(name, category);
   return {
     ...raw,
+    name,
+    description,
     category,
     price_idr,
     formatted_price: formatIDR(price_idr),
     display_image,
-    duration_label: extractDuration(raw.name, raw.description || ""),
-    warranty_label: extractWarranty(raw.name, raw.description || "", raw.warranty_days || 0),
+    duration_label: extractDuration(name, description),
+    warranty_label: extractWarranty(name, description, raw.warranty_days || 0),
     is_in_stock: raw.stock > 0,
   };
 }
