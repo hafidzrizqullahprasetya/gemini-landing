@@ -1,22 +1,24 @@
 import rawProducts from "../data/initialProducts.json";
 
 export interface VenteProduct {
-  id: number;
+  id: number | string;
+  supplier?: "vente" | "rezeki";
   name: string;
   description: string;
-  emoji: string;
-  image_url: string | null;
-  price_usd: number;
-  warranty_days: number;
-  delivery_type: string;
-  api_test: boolean;
+  emoji?: string;
+  image_url?: string | null;
+  price_usd?: number;
+  warranty_days?: number;
+  delivery_type?: string;
+  api_test?: boolean;
   stock: number;
   price_tiers?: Array<{
     min_qty: number;
     max_qty: number;
     price_usd: number;
   }>;
-  pricing_type: string;
+  pricing_type?: string;
+  requires_email?: boolean;
 }
 
 export type ProductCategory =
@@ -61,6 +63,7 @@ const CATEGORY_MAP: Record<Exclude<ProductCategory, "Semua">, string[]> = {
     "granola",
     "higgsfield",
     "manus",
+    "wispr",
   ],
   "Dev & Cloud": [
     "supabase",
@@ -90,6 +93,8 @@ const CATEGORY_MAP: Record<Exclude<ProductCategory, "Semua">, string[]> = {
     "autodesk",
     "wink",
     "supercut",
+    "alight motion",
+    "meitu",
   ],
   "Office & Edu": [
     "microsoft",
@@ -104,6 +109,9 @@ const CATEGORY_MAP: Record<Exclude<ProductCategory, "Semua">, string[]> = {
     "edx",
     "readwise",
     "scribd",
+    "gmail",
+    "outlook",
+    "hotmail",
   ],
   "Streaming & Hiburan": [
     "netflix",
@@ -122,8 +130,8 @@ const CATEGORY_MAP: Record<Exclude<ProductCategory, "Semua">, string[]> = {
     "hma",
     "windows",
     "zoom",
-    "gmail",
-    "outlook",
+    "expressvpn",
+    "avira",
   ],
 };
 
@@ -211,7 +219,31 @@ export function createBrandVectorBadge(name: string, category: string): string {
     accent = "#06b6d4";
     tag = "SECURE VPN";
     monogram = "VPN";
-  } else if (lower.includes("netflix") || lower.includes("stream") || lower.includes("tv")) {
+  } else if (lower.includes("netflix")) {
+    accent = "#e50914";
+    tag = "NETFLIX";
+    monogram = "NF";
+  } else if (lower.includes("spotify")) {
+    accent = "#1db954";
+    tag = "SPOTIFY";
+    monogram = "SP";
+  } else if (lower.includes("gmail") || lower.includes("outlook") || lower.includes("hotmail")) {
+    accent = "#ea4335";
+    tag = "MAIL SUITE";
+    monogram = "EM";
+  } else if (lower.includes("wispr")) {
+    accent = "#8b5cf6";
+    tag = "WISPR AI";
+    monogram = "WF";
+  } else if (lower.includes("edx")) {
+    accent = "#0284c7";
+    tag = "EDX EDU";
+    monogram = "EX";
+  } else if (lower.includes("alight")) {
+    accent = "#ec4899";
+    tag = "ALIGHT";
+    monogram = "AM";
+  } else if (lower.includes("stream") || lower.includes("tv") || lower.includes("hbo")) {
     accent = "#e11d48";
     tag = "STREAMING";
     monogram = "TV";
@@ -361,11 +393,14 @@ export function formatIDR(amount: number): string {
   }).format(amount);
 }
 
-export function enrichProduct(raw: VenteProduct): EnrichedProduct {
+export function enrichProduct(raw: VenteProduct & { price_idr?: number }): EnrichedProduct {
   const category = detectCategory(raw.name);
-  const rate = 16800;
-  const rawIdr = raw.price_usd * rate;
-  const price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
+  let price_idr = raw.price_idr;
+  if (!price_idr || price_idr <= 0) {
+    const rate = 16800;
+    const rawIdr = (raw.price_usd || 0) * rate;
+    price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
+  }
 
   const display_image = getProductDisplayImage(raw.name, category);
   return {
@@ -387,12 +422,22 @@ export const initialEnrichedProducts: EnrichedProduct[] = (
   .map(enrichProduct);
 
 export async function fetchLiveProducts(): Promise<EnrichedProduct[]> {
+  // 1. Try Octane Unified Multi-Supplier API
   try {
-    const response = await fetch("/api/reseller/products", {
-      headers: {
-        "X-Reseller-Key": "vbr_live_ff7171abf6_rRjj5OPO_uX5knZkdK93q_McT-Whr38J__2UYCtgpp4",
-      },
-    });
+    const octaneRes = await fetch("/api/octane/products");
+    if (octaneRes.ok) {
+      const data = await octaneRes.json();
+      if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+        return data.products.map(enrichProduct);
+      }
+    }
+  } catch {
+    // Fall through to Vente or cache
+  }
+
+  // 2. Direct Vente fallback
+  try {
+    const response = await fetch("/api/reseller/products");
     if (response.ok) {
       const data = await response.json();
       if (data.products && Array.isArray(data.products)) {

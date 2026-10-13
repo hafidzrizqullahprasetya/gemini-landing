@@ -215,7 +215,7 @@ export function ProductCatalog({
                   {/* Thumbnail & Badges */}
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/30">
                     <img
-                      src={product.display_image}
+                      src={product.display_image || createBrandVectorBadge(product.name, product.category)}
                       alt={product.name}
                       loading="lazy"
                       onError={(e) => {

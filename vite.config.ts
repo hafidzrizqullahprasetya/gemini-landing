@@ -1,10 +1,20 @@
 import { defineConfig } from "vite";
+import type { Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
+import { app as octaneApp } from "./server/index";
+
+const octaneApiPlugin = (): Plugin => ({
+  name: "octane-api-middleware",
+  apply: "serve",
+  configureServer(server) {
+    server.middlewares.use(octaneApp);
+  },
+});
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), octaneApiPlugin()],
   resolve: {
     alias: [
       { find: /^@\/services\/(.*)$/, replacement: path.resolve(__dirname, "./src/services/$1") },
@@ -19,7 +29,7 @@ export default defineConfig({
         target: "https://ventetelegrambotrailway-production.up.railway.app",
         changeOrigin: true,
         headers: {
-          "X-Reseller-Key": "vbr_live_ff7171abf6_rRjj5OPO_uX5knZkdK93q_McT-Whr38J__2UYCtgpp4",
+          "X-Reseller-Key": process.env.VENTE_API_KEY || "",
         },
       },
     },

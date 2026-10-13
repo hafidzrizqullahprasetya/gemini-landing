@@ -31,7 +31,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
     `Saya ingin memesan produk:\n` +
     `• Nama: ${product.name}\n` +
     `• ID Produk: #${product.id}\n` +
-    `• Harga: ${product.formatted_price} ($${product.price_usd} USD)\n` +
+    `• Harga: ${product.formatted_price}${product.price_usd ? ` ($${product.price_usd} USD)` : ""}\n` +
     `• Durasi: ${product.duration_label}\n\n` +
     `Mohon kirimkan detail pembayaran QRIS / Bank. Terima kasih!`,
   );
@@ -100,7 +100,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
               </div>
               <div className="flex items-center gap-2 text-foreground">
                 <Zap className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>Pengiriman: Tipe {product.delivery_type.toUpperCase()}</span>
+                <span>Pengiriman: Tipe {(product.delivery_type || "instant").toUpperCase()}</span>
               </div>
               <div className="flex items-center gap-2 text-foreground">
                 <Clock className="h-4 w-4 text-primary flex-shrink-0" />
