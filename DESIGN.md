@@ -1,35 +1,43 @@
-# DESIGN.md — Octane AI (Gemini Pro Landing)
+# DESIGN.md — Octane (octane.web.id)
 
 ## 1. Identity & Purpose
 
-- **Brand:** Octane AI
-- **Domain:** octane.web.id
-- **Offering:** Layanan aktivasi resmi Google One AI Premium (Gemini Advanced 1.5 Pro + 2TB Storage) 18 bulan seharga Rp 30.000.
-- **Target Audience:** Developer, mahasiswa teknik, kreator konten, dan tech-savvy users di Indonesia yang membutuhkan kapasitas AI dan cloud storage besar tanpa beban langganan bulanan.
+- **Brand:** OCTANE
+- **Domain:** `octane.web.id`
+- **Core Concept:** "Bahan Bakar Produktivitas Digital" — analogi oktan tinggi (high-octane fuel) sebagai pendorong kecepatan workflow untuk developer, kreator, data scientist, dan pelajar.
+- **Model:** Digital products marketplace & catalog powered by VenteBot Reseller API v1.2.0.
+- **Offering:** 100+ varian software & accounts: AI Model (Gemini 18M, Claude 50M API, ChatGPT Plus K12), Developer Stack (Supabase, Railway, Linear, PostHog, JetBrains), Design Tools (CapCut 1600 Credit, Canva, Figma 2yr, Framer), dan Edu/Streaming.
+- **Positioning vs Kompetitor (prastyaneki.biz.id):**
+  - **Palet Warna Unik:** Octane menggunakan *High-Octane Flame* (`#ea580c` / `#ff6600`) berpadu dengan *Pitch Carbon Slate* (`#090a0f`), kontras dengan palet tanah/terracotta lembut milik Prastyaneki.
+  - **Keunggulan Kompetitif:** Sinkronisasi API real-time (stok detik ini), 100+ varian terlengkap (termasuk developer token API), aktivasi cepat 2–5 menit, serta kelengkapan kredensial 2FA secret terverifikasi.
 
 ## 2. Visual Dials (Antislop Specification)
 
-- **ENERGY:** 2 (Balanced, confident, clear focal hierarchy)
-- **RHYTHM:** 2 (Structured sections with distinct content compositions)
-- **MOTION:** 1 (Subtle hover feedback, instantaneous state changes, zero endless loops or distracting pulses)
+- **ENERGY:** 3 (High-performance, athletic precision, sharp contrast).
+- **RHYTHM:** 3 (Struktur naratif mengalir: Hero -> Flash Drops Carousel -> Keunggulan Kompetitif -> Live Catalog Grid -> Panduan Transaksi -> Kebijakan Garansi -> FAQ -> Footer).
+- **MOTION:** 1 (Subtle interactive states, instantaneous transition, zero endless looping pulses).
 
 ## 3. Design System & Palette
 
-- **Canvas:** Pure Pitch Black (`#000000`)
-- **Surfaces:** Matte Dark Neutral (`#0d0e12`, `#121318`) with subtle border (`rgba(255, 255, 255, 0.08)`)
-- **Single Primary Accent:** Vivid Electric Blue (`#0091ff`) used exclusively on key conversion points (Primary CTA button, key metric highlights).
-- **Secondary Brand Hue:** Google AI Gradient subtle text clip (`#8fb9ff` to `#1d6dff` to `#00bdf6`) applied sparingly to the core headline keywords.
-- **Typography:** Figtree (Google Fonts) — geometric readability with high structural clarity.
-- **Text Contrast:**
-  - Headings & Primary Text: `#ffffff` (21:1 contrast against `#000000`)
-  - Secondary Text: `#d4d4d4` / `#a3a3a3` (minimum 7:1 contrast, exceeds WCAG AAA)
-  - Muted Footnotes: `#888888` (minimum 4.6:1 contrast, exceeds WCAG AA)
+- **Mode Terang (Light):**
+  - Background: Crisp Ice Slate (`hsl(210 20% 98%)` / `#f8fafc`)
+  - Foreground: Deep Charcoal Obsidian (`hsl(222 47% 11%)` / `#090d16`) — 16.5:1 contrast.
+  - Card: Pure White (`#ffffff`) with hairline border (`#cbd5e1`).
+  - Primary Accent: High-Octane Flame (`hsl(21 90% 48%)` / `#ea580c`) — 4.9:1 contrast.
+- **Mode Gelap (Dark):**
+  - Background: Pitch Stealth Carbon (`hsl(230 25% 6%)` / `#090a0f`)
+  - Foreground: Crisp Pure White (`hsl(210 20% 98%)` / `#f8fafc`) — 16.8:1 contrast.
+  - Card: Deep Carbon Slate (`hsl(232 20% 9%)` / `#11131a`) with hairline border (`#232733`).
+  - Primary Accent: Vivid Electric Flame (`hsl(24 100% 50%)` / `#ff6600`) — 6.5:1 contrast.
+- **Typography:**
+  - Headings: `Manrope` / `DM Sans`
+  - Body: `DM Sans`
+  - Numbers, Specs & Badges: `DM Mono`
 
-## 4. Antislop Guardrails & Decisions (R-31)
+## 4. Antislop & Humanizer Rules
 
-- **No Em Dash (R-02):** Replaced with colons, parentheses, or clean punctuation.
-- **No Fake Terminal Window (R-05):** Replaced with concrete factual comparisons (token capacity in real-world equivalents: PDF pages, lines of code, video length).
-- **No Decorative Emojis (R-04):** UI text uses semantic copy and clean SVG glyphs.
-- **No Redundant Eyebrow (R-09):** The H1 headline directly leads the narrative without artificial pill badges above it.
-- **Dose Cap on Glassmorphism (R-10):** Backdrop blur restricted to the top floating navigation bar only. Cards use solid matte surfaces.
-- **Transparent Pricing & Guarantees (C-5, R-36):** No fictional user counts or fake reviews. Clear refund & activation guarantee.
+- **Zero Generic AI Gradients:** Menolak gradien ungu-biru; memakai aksen High-Octane Flame tunggal yang terarah.
+- **Zero Decorative Emojis di UI Text:** Ikon menggunakan SVG konsisten via `lucide-react`.
+- **Zero Fake Status Dots:** Indikator stok berbasis data riil API per detik.
+- **No Em Dashes:** Menggunakan titik dua, kurung, atau titik.
+- **Accessible & Responsive:** Target sentuh 44x44px, dialog modal closable via Escape, kontras WCAG AA di kedua tema.

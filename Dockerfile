@@ -1,23 +1,18 @@
-FROM nginx:alpine
-
-# Install Node.js runtime for Midtrans Core API proxy
-RUN apk add --no-cache nodejs
+FROM node:20-alpine AS build
 
 WORKDIR /app
+RUN npm install -g pnpm
 
-# Copy built static frontend
-COPY dist /usr/share/nginx/html
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Copy Nginx reverse proxy configuration
+COPY . .
+RUN pnpm run build
+
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy API server and activation links data
-COPY api-server /app/api-server
-COPY data /app/data
-
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
 EXPOSE 80
-CMD ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

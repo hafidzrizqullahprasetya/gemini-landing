@@ -1,65 +1,55 @@
-# Qwik City App ⚡️
+# Octane — Bahan Bakar Produktivitas Digital (octane.web.id)
 
-- [Qwik Docs](https://qwik.dev/)
-- [Discord](https://qwik.dev/chat)
-- [Qwik GitHub](https://github.com/QwikDev/qwik)
-- [@QwikDev](https://twitter.com/QwikDev)
-- [Vite](https://vitejs.dev/)
+Platform marketplace & katalog produk digital berkecepatan tinggi untuk developer, kreator, dan pelajar. Terhubung langsung dengan **VenteBot Reseller API v1.2.0**.
 
 ---
 
-## Project Structure
+## Brand & Konsep
 
-This project is using Qwik with [QwikCity](https://qwik.dev/qwikcity/overview/). QwikCity is just an extra set of tools on top of Qwik to make it easier to build a full site, including directory-based routing, layouts, and more.
+- **Nama Brand:** OCTANE
+- **Domain:** `octane.web.id`
+- **Filosofi:** Bahan bakar oktan tinggi yang menginjeksi performa workflow harian dengan akun AI, developer stack, dan creative suite legal bergaransi.
+- **Karakter Visual:** Palet *High-Octane Flame* (`#ea580c` / `#ff6600`) berpadu dengan *Pitch Carbon Slate* (`#090a0f`), berbeda tegas dengan gaya earthy/terracotta kompetitor (`prastyaneki.biz.id`).
 
-Inside your project, you'll see the following directory structure:
+---
 
-```
-├── public/
-│   └── ...
-└── src/
-    ├── components/
-    │   └── ...
-    └── routes/
-        └── ...
-```
+## Keunggulan Kompetitif vs Kompetitor
 
-- `src/routes`: Provides the directory-based routing, which can include a hierarchy of `layout.tsx` layout files, and an `index.tsx` file as the page. Additionally, `index.ts` files are endpoints. Please see the [routing docs](https://qwik.dev/qwikcity/routing/overview/) for more info.
+1. **Sinkronisasi Stok Real-Time API:** Stok tersaji akurat detik ini langsung dari server (misal: Gemini 790+ ready). Tanpa sistem manual atau penolakan setelah transfer.
+2. **Katalog 100+ Varian Komprehensif:** Tidak hanya menjual produk umum, melainkan mencakup Token API Claude/Codex, infrastruktur cloud (Supabase, Railway, Linear, PostHog), hingga suite edukasi dan hiburan.
+3. **Kecepatan Aktivasi 2–5 Menit:** Format transaksi otomatis via WhatsApp & Telegram Bot siap kirim tanpa antrean chat manual berjam-jam.
+4. **Kejelasan Garansi & Format 2FA:** SLA garansi tertulis per produk (Full Warranty, W25D, W5D). Akun dikirimkan lengkap dengan 2FA secret key dan petunjuk autentikasi.
 
-- `src/components`: Recommended directory for components.
+---
 
-- `public`: Any static assets, like images, can be placed in the public directory. Please see the [Vite public directory](https://vitejs.dev/guide/assets.html#the-public-directory) for more info.
+## Arsitektur & Teknologi
 
-## Add Integrations and deployment
+- **Frontend:** React 19, TypeScript, Vite 6
+- **Styling:** Tailwind CSS v4, shadcn UI components, CSS variables
+- **Komponen Inti:**
+  - `components/ui/card.tsx`: Kontainer shadcn
+  - `components/ui/button.tsx`: Tombol interaktif cva
+  - `components/ui/badge.tsx`: Label status produk
+  - `components/ui/product-card-3.tsx`: Carousel drop card produk (responsif 1-3 item)
+  - `components/ui/product-drop-card.tsx`: Re-export kompatibilitas
+  - `components/ui/demo.tsx`: Demo drop card
+  - `components/ComparisonSection.tsx`: Tabel keunggulan kompetitif
+- **API Reseller:**
+  - Endpoint: `/api/reseller/products`
+  - Proxy lokal otomatis di Vite dan Nginx ke `https://ventetelegrambotrailway-production.up.railway.app`
+  - Fallback lokal: `src/data/initialProducts.json` (105 produk riil)
 
-Use the `pnpm qwik add` command to add additional integrations. Some examples of integrations includes: Cloudflare, Netlify or Express Server, and the [Static Site Generator (SSG)](https://qwik.dev/qwikcity/guides/static-site-generation/).
+---
 
-```shell
-pnpm qwik add # or `pnpm qwik add`
-```
+## Perintah Kerja
 
-## Development
+```bash
+# Development
+pnpm dev
 
-Development mode uses [Vite's development server](https://vitejs.dev/). The `dev` command will server-side render (SSR) the output during development.
+# Build Produksi
+pnpm build
 
-```shell
-npm start # or `pnpm start`
-```
-
-> Note: during dev mode, Vite may request a significant number of `.js` files. This does not represent a Qwik production build.
-
-## Preview
-
-The preview command will create a production build of the client modules, a production build of `src/entry.preview.tsx`, and run a local server. The preview server is only for convenience to preview a production build locally and should not be used as a production server.
-
-```shell
-pnpm preview # or `pnpm preview`
-```
-
-## Production
-
-The production build will generate client and server modules by running both client and server build commands. The build command will use Typescript to run a type check on the source code.
-
-```shell
-pnpm build # or `pnpm build`
+# Preview Hasil Build
+pnpm preview
 ```

@@ -1,11 +1,7 @@
 services:
-  gemini-landing:
+  vente-store:
     build: .
-    container_name: octane-gemini-landing
+    container_name: prs-vente-store
     restart: always
-    env_file:
-      - .env
-    volumes:
-      - ./data:/app/data
     ports:
       - "8090:80"
