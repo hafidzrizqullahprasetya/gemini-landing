@@ -1,4 +1,4 @@
-import { MessageCircle, Send, ArrowUp } from "lucide-react";
+import { MessageCircle, ArrowUp } from "lucide-react";
 
 export function Footer() {
   const scrollToTop = () => {
@@ -48,24 +48,15 @@ export function Footer() {
           </p>
 
           {/* Hongfilms Rounded-Full Action Buttons */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
+          <div className="mt-8 flex items-center justify-center">
             <a
-              href="https://wa.me/6285179927909"
+              href="https://wa.me/6281325081046"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full bg-foreground px-8 py-3.5 text-sm font-semibold text-background shadow-sm transition-opacity duration-200 hover:opacity-90 inline-flex items-center gap-2 cursor-pointer"
             >
               <MessageCircle className="h-4 w-4 text-emerald-500" />
-              <span>WhatsApp Admin</span>
-            </a>
-            <a
-              href="https://t.me/octanedigitalbot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-secondary px-8 py-3.5 text-sm font-semibold text-secondary-foreground transition-colors duration-200 hover:bg-muted inline-flex items-center gap-2 cursor-pointer"
-            >
-              <Send className="h-4 w-4 text-sky-500" />
-              <span>Telegram Bot</span>
+              <span>WhatsApp Admin (Hafidz Prasetya · 081325081046)</span>
             </a>
           </div>
         </div>

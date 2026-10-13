@@ -17,7 +17,7 @@ Platform marketplace & katalog produk digital berkecepatan tinggi untuk develope
 
 1. **Sinkronisasi Stok Real-Time API:** Stok tersaji akurat detik ini langsung dari server (misal: Gemini 790+ ready). Tanpa sistem manual atau penolakan setelah transfer.
 2. **Katalog 100+ Varian Komprehensif:** Tidak hanya menjual produk umum, melainkan mencakup Token API Claude/Codex, infrastruktur cloud (Supabase, Railway, Linear, PostHog), hingga suite edukasi dan hiburan.
-3. **Kecepatan Aktivasi 2–5 Menit:** Format transaksi otomatis via WhatsApp & Telegram Bot siap kirim tanpa antrean chat manual berjam-jam.
+3. **Kecepatan Aktivasi 2–5 Menit:** Format transaksi otomatis via WhatsApp Admin langsung siap kirim tanpa antrean chat manual berjam-jam.
 4. **Kejelasan Garansi & Format 2FA:** SLA garansi tertulis per produk (Full Warranty, W25D, W5D). Akun dikirimkan lengkap dengan 2FA secret key dan petunjuk autentikasi.
 
 ---

@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Zap,
   Clock,
-  Send,
   MessageCircle,
   Copy,
   Check,
@@ -28,16 +27,16 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   const cleanDesc = product.description.trim();
 
   const waMessage = encodeURIComponent(
-    `Halo Admin Octane (octane.web.id), saya ingin memesan:\n` +
-    `• Produk: ${product.name}\n` +
+    `Halo Admin Octane (Hafidz Prasetya),\n` +
+    `Saya ingin memesan produk:\n` +
+    `• Nama: ${product.name}\n` +
     `• ID Produk: #${product.id}\n` +
     `• Harga: ${product.formatted_price} ($${product.price_usd} USD)\n` +
-    `• Durasi: ${product.duration_label}\n` +
+    `• Durasi: ${product.duration_label}\n\n` +
     `Mohon kirimkan detail pembayaran QRIS / Bank. Terima kasih!`,
   );
 
-  const waLink = `https://wa.me/6285179927909?text=${waMessage}`;
-  const tgLink = `https://t.me/octanedigitalbot?start=order_${product.id}`;
+  const waLink = `https://wa.me/6281325081046?text=${waMessage}`;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(
@@ -148,10 +147,10 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
 
         {/* Order CTAs */}
         <div className="space-y-3 pt-2 border-t hairline-border">
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div>
             <Button
               asChild
-              className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+              className="w-full h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm cursor-pointer"
             >
               <a
                 href={waLink}
@@ -159,24 +158,8 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2"
               >
-                <MessageCircle className="h-4 w-4" />
-                <span>Pesan Cepat via WhatsApp</span>
-              </a>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="flex-1 h-11 border-border text-foreground hover:bg-muted font-medium"
-            >
-              <a
-                href={tgLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2"
-              >
-                <Send className="h-4 w-4 text-sky-500" />
-                <span>Order via Telegram Bot</span>
+                <MessageCircle className="h-5 w-5" />
+                <span>Pesan via WhatsApp (Hafidz Prasetya)</span>
               </a>
             </Button>
           </div>
