@@ -1,6 +1,5 @@
 import { ProductDropCard, type DropItem } from "@/components/ui/product-card-3";
 import { createBrandVectorBadge, type EnrichedProduct } from "@/services/venteApi";
-import { Flame } from "lucide-react";
 
 interface FeaturedDropsProps {
   products: EnrichedProduct[];
@@ -89,19 +88,13 @@ export function FeaturedDrops({
   return (
     <section id="drops" className="py-16 sm:py-24 border-b border-border/40 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-semibold uppercase tracking-wider">
-              <Flame className="h-3.5 w-3.5" />
-              <span>Sorotan Pilihan</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-display mt-1">
-              Octane Flash Drops
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Varian produk digital terlaris dengan stok siap aktivasi instan dan garansi replace.
-            </p>
-          </div>
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display">
+            Octane Flash Drops
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Varian produk digital terlaris dengan stok siap aktivasi instan dan garansi replace.
+          </p>
         </div>
 
         <ProductDropCard
