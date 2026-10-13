@@ -30,26 +30,26 @@
   }
 
   .dark {
-    /* Octane Dark Mode: Pitch Carbon & Vivid Electric Flame */
-    --background: 230 25% 6%; /* #090a0f Carbon */
-    --foreground: 210 20% 98%; /* #f8fafc */
-    --card: 232 20% 9%; /* #11131a */
-    --card-foreground: 210 20% 98%;
-    --popover: 232 20% 9%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 24 100% 50%; /* #ff6600 Vivid Octane */
-    --primary-foreground: 230 25% 6%;
-    --secondary: 230 16% 14%; /* #1c1e28 */
-    --secondary-foreground: 210 20% 95%;
-    --muted: 230 16% 14%;
-    --muted-foreground: 215 14% 68%;
-    --accent: 230 16% 18%;
-    --accent-foreground: 210 20% 98%;
+    /* Octane Dark Mode: Pitch Stealth Black & Vivid Flame Orange (Pure Neutral Black, Zero Blue Tint) */
+    --background: 0 0% 4%; /* #0a0a0a */
+    --foreground: 0 0% 98%; /* #fafafa */
+    --card: 0 0% 8%; /* #141414 */
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 21 100% 49%; /* #fb5701 Vivid Octane Flame */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 13%; /* #212121 */
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%; /* #a3a3a3 */
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 230 14% 18%; /* #232733 */
-    --input: 230 14% 22%;
-    --ring: 24 100% 50%;
+    --border: 0 0% 15%; /* #262626 */
+    --input: 0 0% 18%;
+    --ring: 21 100% 49%;
   }
 
   * {

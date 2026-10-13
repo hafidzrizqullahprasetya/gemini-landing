@@ -18,7 +18,7 @@ export function FeaturedDrops({
       collection: "Google AI & 5TB Storage",
       badge: "Stok 790+",
       price: "Rp 8.000",
-      imageSrc: createBrandVectorBadge("Gemini 18 Months", "AI & LLM"),
+      imageSrc: "/products/gemini.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Gemini 18"));
         if (found) onSelectProduct(found);

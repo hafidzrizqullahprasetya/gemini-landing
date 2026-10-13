@@ -234,8 +234,8 @@ export function createBrandVectorBadge(name: string, category: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#151824" />
-      <stop offset="100%" stop-color="#090a0f" />
+      <stop offset="0%" stop-color="#181818" />
+      <stop offset="100%" stop-color="#0a0a0a" />
     </linearGradient>
   </defs>
   <rect width="480" height="280" rx="14" fill="url(#g)" />
@@ -280,6 +280,19 @@ export function extractWarranty(name: string, desc: string, days: number): strin
   }
   return "Garansi 24 Jam";
 }
+const CUSTOM_PRODUCT_IMAGES: Record<string, string> = {
+  gemini: "/products/gemini.webp",
+};
+
+export function getProductDisplayImage(name: string, category: string): string {
+  const lower = name.toLowerCase();
+  for (const [key, path] of Object.entries(CUSTOM_PRODUCT_IMAGES)) {
+    if (lower.includes(key)) {
+      return path;
+    }
+  }
+  return createBrandVectorBadge(name, category);
+}
 
 export function formatIDR(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -296,8 +309,7 @@ export function enrichProduct(raw: VenteProduct): EnrichedProduct {
   const rawIdr = raw.price_usd * rate;
   const price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
 
-  // Vector badge generated instantly per brand & category without external image latency
-  const display_image = createBrandVectorBadge(raw.name, category);
+  const display_image = getProductDisplayImage(raw.name, category);
   return {
     ...raw,
     category,
