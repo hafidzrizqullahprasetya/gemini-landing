@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sun, Moon, Menu, X, ShoppingBag, Flame } from "lucide-react";
+import { Sun, Moon, Menu, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
@@ -19,18 +19,20 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b hairline-border bg-background/90 backdrop-blur-md transition-colors">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-colors">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 sm:px-10 h-18">
         {/* Brand */}
         <a
           href="#top"
-          className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-foreground"
+          className="flex items-center gap-3 font-display text-lg font-bold tracking-tight text-foreground group"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-mono font-bold text-sm shadow-sm">
-            <Flame className="h-4 w-4" />
-          </div>
+          <img
+            src="/logo.webp"
+            alt="Octane Logo"
+            className="h-9 w-9 object-contain transition-transform duration-200 group-hover:scale-105"
+          />
           <div className="flex flex-col">
-            <span className="leading-none tracking-tight">OCTANE</span>
+            <span className="leading-none tracking-tight font-extrabold text-base">OCTANE</span>
             <span className="text-[10px] font-mono tracking-wider text-muted-foreground uppercase mt-0.5">
               octane.web.id
             </span>
@@ -39,7 +41,7 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
 
         {/* Desktop Nav */}
         <nav
-          className="hidden md:flex items-center gap-6 text-sm font-medium"
+          className="hidden md:flex items-center gap-8 text-sm font-medium"
           aria-label="Navigasi Utama"
         >
           {navLinks.map((link) => (
@@ -56,14 +58,14 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           {/* Live stock indicator */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border hairline-border bg-muted/50 text-xs font-mono text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/60 text-xs font-mono text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>{inStockCount} Ready</span>
           </div>
 
           {/* Theme toggle */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={onToggleTheme}
             aria-label={
@@ -71,7 +73,7 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
                 ? "Beralih ke mode terang"
                 : "Beralih ke mode gelap"
             }
-            className="h-9 w-9 text-foreground"
+            className="h-9 w-9 text-foreground rounded-full hover:bg-muted"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4" />
@@ -84,7 +86,7 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
           <Button
             asChild
             size="sm"
-            className="hidden sm:inline-flex bg-primary text-primary-foreground hover:bg-primary/90"
+            className="hidden sm:inline-flex rounded-full px-5 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
           >
             <a href="#katalog" className="flex items-center gap-1.5">
               <ShoppingBag className="h-3.5 w-3.5" />
@@ -94,12 +96,12 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
 
           {/* Mobile menu trigger */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Tutup navigasi" : "Buka navigasi"}
             aria-expanded={mobileMenuOpen}
-            className="md:hidden h-9 w-9"
+            className="md:hidden h-9 w-9 rounded-full"
           >
             {mobileMenuOpen ? (
               <X className="h-4 w-4" />
@@ -112,7 +114,7 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t hairline-border bg-card px-4 py-4 space-y-3">
+        <div className="md:hidden border-t border-border/40 bg-card px-6 py-4 space-y-3">
           <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => (
               <a
@@ -125,12 +127,12 @@ export function Navbar({ theme, onToggleTheme, inStockCount }: NavbarProps) {
               </a>
             ))}
           </nav>
-          <div className="pt-2 border-t hairline-border flex items-center justify-between text-xs text-muted-foreground">
+          <div className="pt-2 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-mono">{inStockCount} produk siap diaktivasi</span>
             <Button
               asChild
               size="sm"
-              className="w-full bg-primary text-primary-foreground mt-2"
+              className="w-full rounded-full bg-primary text-primary-foreground mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               <a href="#katalog">Lihat Semua Produk</a>

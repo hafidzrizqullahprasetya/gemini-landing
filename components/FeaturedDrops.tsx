@@ -87,7 +87,7 @@ export function FeaturedDrops({
   ];
 
   return (
-    <section id="drops" className="py-14 sm:py-20 border-b hairline-border bg-background">
+    <section id="drops" className="py-16 sm:py-24 border-b border-border/40 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>

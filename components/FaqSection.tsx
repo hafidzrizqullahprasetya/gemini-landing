@@ -32,7 +32,7 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-14 sm:py-20 border-b hairline-border bg-background">
+    <section id="faq" className="py-16 sm:py-24 bg-background">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="text-left mb-10">
           <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-semibold uppercase tracking-wider">
@@ -48,7 +48,7 @@ export function FaqSection() {
           </p>
         </div>
 
-        <div className="divide-y hairline-border border hairline-border rounded-xl bg-card overflow-hidden">
+        <div className="divide-y divide-border/40 border border-border/40 rounded-2xl bg-card overflow-hidden">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (

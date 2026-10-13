@@ -67,7 +67,7 @@ export function ProductCatalog({
   const displayedProducts = filteredProducts.slice(0, visibleCount);
 
   return (
-    <section id="katalog" className="py-14 sm:py-20 border-b hairline-border bg-background">
+    <section id="katalog" className="py-16 sm:py-24 border-b border-border/40 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-left mb-8">
@@ -98,7 +98,7 @@ export function ProductCatalog({
                   setVisibleCount(24);
                 }}
                 placeholder="Cari produk (Gemini, Claude, CapCut, Office, VPN)..."
-                className="w-full h-11 pl-10 pr-4 rounded-lg border hairline-border bg-card text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full h-11 pl-10 pr-4 rounded-full border border-border/50 bg-card text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               {searchQuery && (
                 <button
@@ -116,11 +116,10 @@ export function ProductCatalog({
               <button
                 type="button"
                 onClick={() => setOnlyInStock(!onlyInStock)}
-                className={`h-11 px-3.5 rounded-lg border hairline-border text-xs font-medium flex items-center gap-2 transition-colors ${onlyInStock
-                  ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-card text-muted-foreground hover:text-foreground"
+                className={`h-11 px-4 rounded-full border border-border/50 text-xs font-medium flex items-center gap-2 transition-colors ${onlyInStock
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card text-muted-foreground hover:text-foreground"
                   }`}
-                aria-pressed={onlyInStock}
               >
                 <div
                   className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${onlyInStock ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"
@@ -136,7 +135,7 @@ export function ProductCatalog({
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as "default" | "price-asc" | "price-desc" | "stock" | "name")}
                   aria-label="Urutkan produk"
-                  className="h-11 px-3 pr-8 rounded-lg border hairline-border bg-card text-foreground text-xs font-medium appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-11 px-4 pr-9 rounded-full border border-border/50 bg-card text-foreground text-xs font-medium appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="default">Urutan Default</option>
                   <option value="price-asc">Harga: Rendah ke Tinggi</option>
@@ -180,7 +179,7 @@ export function ProductCatalog({
         </div>
 
         {/* Results Counter */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-6 pb-2 border-b hairline-border font-mono">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-6 pb-2 border-b border-border/40 font-mono">
           <span>
             Ditemukan {filteredProducts.length} produk
             {selectedCategory !== "Semua" ? ` dalam kategori "${selectedCategory}"` : ""}
@@ -215,7 +214,7 @@ export function ProductCatalog({
             {displayedProducts.map((product) => (
               <div
                 key={product.id}
-                className="group rounded-xl border hairline-border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:border-foreground/30 hover:shadow-lg"
+                className="group rounded-2xl border border-border/50 bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-lg"
               >
                 <div>
                   {/* Thumbnail & Badges */}
@@ -267,7 +266,7 @@ export function ProductCatalog({
                 </div>
 
                 {/* Footer: Price and CTA */}
-                <div className="p-4 pt-0 mt-2 border-t hairline-border/60">
+                <div className="p-4 pt-0 mt-2 border-t border-border/40">
                   <div className="flex items-baseline justify-between pt-3">
                     <div>
                       <span className="text-xs text-muted-foreground block text-[10px] uppercase font-mono">
@@ -285,7 +284,7 @@ export function ProductCatalog({
 
                   <Button
                     onClick={() => onSelectProduct(product)}
-                    className="w-full mt-3 h-9 text-xs font-medium bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="w-full mt-3 h-10 text-xs font-medium rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                   >
                     <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
                     <span>Detail & Beli</span>
