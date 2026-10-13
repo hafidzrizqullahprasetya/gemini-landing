@@ -129,24 +129,46 @@ export function ProductModal({
     };
   }, [product, isOpen]);
 
-  // Poll Midtrans payment status while dynamic QR is active and not yet settled
+  // Real-time EventSource Stream: 0 Polling, 0 Request Spam, Instant Push from Midtrans Webhook
   useEffect(() => {
     if (!dynamicQr?.orderId || paymentSettled || !isOpen) return;
 
-    const interval = setInterval(() => {
-      fetch(`/api/octane/payment-status/${dynamicQr.orderId}?productId=${product?.id || ""}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data && data.isSettled) {
-            setPaymentSettled(true);
-            setActivationUrl(data.activationUrl || null);
-            clearInterval(interval);
-          }
-        })
-        .catch(() => { });
-    }, 2500);
+    let isMounted = true;
+    const streamUrl = `/api/octane/payment-stream/${dynamicQr.orderId}?productId=${product?.id || ""}`;
+    const es = new EventSource(streamUrl);
 
-    return () => clearInterval(interval);
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data && data.isSettled && isMounted) {
+          setPaymentSettled(true);
+          setActivationUrl(data.activationUrl || null);
+          es.close();
+        }
+      } catch { }
+    };
+
+    es.onerror = () => {
+      // Fallback: 1 single check if stream drops
+      setTimeout(() => {
+        if (!isMounted || paymentSettled) return;
+        fetch(`/api/octane/payment-status/${dynamicQr.orderId}?productId=${product?.id || ""}`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && d.isSettled && isMounted) {
+              setPaymentSettled(true);
+              setActivationUrl(d.activationUrl || null);
+            }
+          })
+          .catch(() => { });
+      }, 4000);
+      es.close();
+    };
+
+    return () => {
+      isMounted = false;
+      es.close();
+    };
   }, [dynamicQr?.orderId, paymentSettled, isOpen, product]);
   const handleTestOneRupiah = (e: React.MouseEvent) => {
     e.preventDefault();

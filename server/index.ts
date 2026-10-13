@@ -147,8 +147,51 @@ function claimProductLink(orderId: string, productId?: string): string {
   }
   return `https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}`;
 }
+// In-memory registry of active SSE streams waiting for Midtrans notification
+const paymentStreams = new Map<string, { res: Response; productId?: string }>();
 
-// 5c. Check Midtrans Payment Status and return link upon settlement
+function notifyPaymentSettled(orderId: string, productId?: string, activationUrl?: string) {
+  const stream = paymentStreams.get(orderId);
+  if (stream) {
+    const finalUrl = activationUrl || claimProductLink(orderId, productId || stream.productId);
+    stream.res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: finalUrl })}\n\n`);
+    stream.res.end();
+    paymentStreams.delete(orderId);
+  }
+}
+
+// 5c. Real-time EventSource Stream (Instant Push from Webhook - Zero Polling)
+app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Response) => {
+  const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
+  const orderId = String(id);
+  const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  // Immediate check if already settled in Midtrans
+  const check = await MidtransService.checkStatus(orderId);
+  if (check.success && check.data) {
+    const tx = check.data.transaction_status;
+    if (tx === "settlement" || tx === "capture") {
+      const url = claimProductLink(orderId, productId);
+      res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: url })}\n\n`);
+      res.end();
+      return;
+    }
+  }
+
+  paymentStreams.set(orderId, { res, productId });
+  req.on("close", () => {
+    paymentStreams.delete(orderId);
+  });
+});
+
+// 5d. Status check fallback
 app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
@@ -193,11 +236,16 @@ app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification
     if (!isValid && process.env.NODE_ENV === "production" && MidtransService.isConfigured()) {
       return res.status(403).json({ error: "Invalid signature key" });
     }
+    const txStatus = transaction_status;
+    if (txStatus === "settlement" || txStatus === "capture") {
+      const actUrl = claimProductLink(order_id);
+      notifyPaymentSettled(order_id, undefined, actUrl);
+    }
 
     console.log(`[Midtrans Webhook] Order ${order_id} status: ${transaction_status}`);
-    res.json({ status: "ok" });
+    return res.json({ status: "ok" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
