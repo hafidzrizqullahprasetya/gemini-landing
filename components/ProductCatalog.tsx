@@ -70,16 +70,11 @@ export function ProductCatalog({
     <section id="katalog" className="py-16 sm:py-24 border-b border-border/40 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-left mb-8">
-          <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-semibold uppercase tracking-wider">
-            <span>Katalog Produk</span>
-            <span>·</span>
-            <span>Katalog Resmi Octane</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground font-display mt-1">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display">
             Daftar Produk Digital
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 max-w-2xl">
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
             Pilih produk yang kamu butuhkan. Informasi stok dan harga disinkronkan secara langsung dengan server.
           </p>
         </div>
@@ -117,8 +112,8 @@ export function ProductCatalog({
                 type="button"
                 onClick={() => setOnlyInStock(!onlyInStock)}
                 className={`h-11 px-4 rounded-full border border-border/50 text-xs font-medium flex items-center gap-2 transition-colors ${onlyInStock
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "bg-card text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-card text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <div

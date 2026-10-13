@@ -34,16 +34,11 @@ export function FaqSection() {
   return (
     <section id="faq" className="py-16 sm:py-24 bg-background">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="text-left mb-10">
-          <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-semibold uppercase tracking-wider">
-            <span>Tanya Jawab</span>
-            <span>·</span>
-            <span>Pertanyaan Umum</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground font-display mt-1">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
             Jawaban lengkap seputar akun, aktivasi, dan layanan garansi kami.
           </p>
         </div>
