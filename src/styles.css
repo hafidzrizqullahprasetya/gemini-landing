@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -135,4 +136,18 @@
   .animate-marquee {
     animation: none;
   }
+}
+
+/* Reliable logo switcher across dark and light classes */
+.slider-logo-light {
+  display: block;
+}
+.slider-logo-dark {
+  display: none;
+}
+.dark .slider-logo-light {
+  display: none !important;
+}
+.dark .slider-logo-dark {
+  display: block !important;
 }
