@@ -335,8 +335,8 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["airtable", "/products/airtable.webp"],
   ["speechify", "/products/speechify.webp"],
   ["descript", "/products/descript.webp"],
-  ["azure", "/products/azure.webp"],
-  ["arize", "/products/azure.webp"],
+  ["arize", "/products/arize.webp"],
+  ["azure", "/products/arize.webp"],
   ["grok", "/products/grok.webp"],
   ["coursera", "/products/coursera.webp"],
 ];
