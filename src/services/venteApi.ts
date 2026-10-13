@@ -336,6 +336,9 @@ const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["speechify", "/products/speechify.webp"],
   ["descript", "/products/descript.webp"],
   ["azure", "/products/azure.webp"],
+  ["arize", "/products/azure.webp"],
+  ["grok", "/products/grok.webp"],
+  ["coursera", "/products/coursera.webp"],
 ];
 
 export function getProductDisplayImage(name: string, category: string): string {
