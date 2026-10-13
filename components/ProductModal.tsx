@@ -261,63 +261,6 @@ export function ProductModal({
           </div>
         </div>
 
-        {/* Wholesale Tiers (if available) */}
-        {product.price_tiers && product.price_tiers.length > 0 && (
-          <div className="rounded-xl border border-border/40 p-4 bg-muted/20">
-            <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground mb-2.5">
-              <Layers className="h-4 w-4 text-primary" />
-              <span>{t.wholesaleTitle}</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
-              {product.price_tiers.map(
-                (
-                  tier: { min_qty: number; max_qty: number; price_usd: number },
-                  idx: number
-                ) => (
-                  <div
-                    key={idx}
-                    className="rounded-lg bg-card p-2.5 text-center border border-border/40"
-                  >
-                    <p className="text-muted-foreground text-[11px]">
-                      Qty {tier.min_qty}–{tier.max_qty}
-                    </p>
-                    <p className="font-bold text-primary mt-0.5">
-                      ${tier.price_usd} USD
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Product Description */}
-        <div className="space-y-2.5">
-          <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            {t.descriptionTitle}
-          </h4>
-          <div className="rounded-xl bg-muted/20 p-4 border border-border/30 text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed font-sans max-h-40 overflow-y-auto">
-            {parsedContent.cleanText}
-          </div>
-
-          {/* Guide Links */}
-          {parsedContent.links.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {parsedContent.links.map((link, idx) => (
-                <a
-                  key={idx}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  <span>{link.label}</span>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Payment Mode Selector: QRIS vs WhatsApp */}
         <div className="space-y-3 pt-3 border-t border-border/40">
@@ -493,6 +436,63 @@ export function ProductModal({
               {lang === "id" ? "NMID: ID1025384010373 (Wong Kito)" : "NMID: ID1025384010373"}
             </span>
           </div>
+        </div>
+        {/* Wholesale Tiers (if available) */}
+        {product.price_tiers && product.price_tiers.length > 0 && (
+          <div className="rounded-xl border border-border/40 p-4 bg-muted/20">
+            <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground mb-2.5">
+              <Layers className="h-4 w-4 text-primary" />
+              <span>{t.wholesaleTitle}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
+              {product.price_tiers.map(
+                (
+                  tier: { min_qty: number; max_qty: number; price_usd: number },
+                  idx: number
+                ) => (
+                  <div
+                    key={idx}
+                    className="rounded-lg bg-card p-2.5 text-center border border-border/40"
+                  >
+                    <p className="text-muted-foreground text-[11px]">
+                      Qty {tier.min_qty}–{tier.max_qty}
+                    </p>
+                    <p className="font-bold text-primary mt-0.5">
+                      ${tier.price_usd} USD
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Product Description */}
+        <div className="space-y-2.5">
+          <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            {t.descriptionTitle}
+          </h4>
+          <div className="rounded-xl bg-muted/20 p-4 border border-border/30 text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed font-sans max-h-40 overflow-y-auto">
+            {parsedContent.cleanText}
+          </div>
+
+          {/* Guide Links */}
+          {parsedContent.links.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {parsedContent.links.map((link, idx) => (
+                <a
+                  key={idx}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>{link.label}</span>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Modal>
