@@ -30,7 +30,7 @@ export function FeaturedDrops({
       collection: "Anthropic Claude Codex",
       badge: "Fast Api",
       price: "Rp 50.500",
-      imageSrc: createBrandVectorBadge("API Claude 50M Token", "AI & LLM"),
+      imageSrc: "/products/claude.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Claude 50M"));
         if (found) onSelectProduct(found);
@@ -42,7 +42,7 @@ export function FeaturedDrops({
       collection: "ByteDance Video Pro",
       badge: "Full Garansi",
       price: "Rp 27.000",
-      imageSrc: createBrandVectorBadge("Capcut pro 1M", "Desain & Kreatif"),
+      imageSrc: "/products/capcut.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Capcut pro 1M"));
         if (found) onSelectProduct(found);
@@ -54,7 +54,7 @@ export function FeaturedDrops({
       collection: "Word, Excel & 1TB Cloud",
       badge: "100+ Ready",
       price: "Rp 8.500",
-      imageSrc: createBrandVectorBadge("Microsoft Office 365", "Office & Edu"),
+      imageSrc: "/products/office365.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Microsoft Office 365"));
         if (found) onSelectProduct(found);
@@ -66,7 +66,7 @@ export function FeaturedDrops({
       collection: "UI/UX Design Studio",
       badge: "2 Tahun",
       price: "Rp 59.000",
-      imageSrc: createBrandVectorBadge("Figma Pro Edu", "Desain & Kreatif"),
+      imageSrc: "/products/figma.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Figma"));
         if (found) onSelectProduct(found);

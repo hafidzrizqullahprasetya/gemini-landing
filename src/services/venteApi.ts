@@ -280,13 +280,67 @@ export function extractWarranty(name: string, desc: string, days: number): strin
   }
   return "Garansi 24 Jam";
 }
-const CUSTOM_PRODUCT_IMAGES: Record<string, string> = {
-  gemini: "/products/gemini.webp",
-};
+const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
+  ["gemini", "/products/gemini.webp"],
+  ["google ai", "/products/gemini.webp"],
+  ["chatgpt", "/products/chatgpt.webp"],
+  ["claude", "/products/claude.webp"],
+  ["codex", "/products/codex.webp"],
+  ["capcut", "/products/capcut.webp"],
+  ["wordwall", "/products/wordwall.webp"],
+  ["gamma", "/products/gamma.webp"],
+  ["microsoft", "/products/office365.webp"],
+  ["office", "/products/office365.webp"],
+  ["zoom", "/products/zoom.webp"],
+  ["quizlet", "/products/quizlet.webp"],
+  ["figma", "/products/figma.webp"],
+  ["ilovepdf", "/products/ilovepdf.webp"],
+  ["prime video", "/products/prime-video.webp"],
+  ["prime", "/products/prime-video.webp"],
+  ["adobe", "/products/adobe-express.webp"],
+  ["wink", "/products/wink.webp"],
+  ["jetbrains", "/products/jetbrains.webp"],
+  ["autodesk", "/products/autodesk.webp"],
+  ["customer.io", "/products/customerio.webp"],
+  ["fin ia", "/products/fin.webp"],
+  ["framer", "/products/framer.webp"],
+  ["granola", "/products/granola.webp"],
+  ["jam", "/products/jam.webp"],
+  ["linear", "/products/linear.webp"],
+  ["mobbin", "/products/mobbin.webp"],
+  ["posthog", "/products/posthog.webp"],
+  ["railway", "/products/railway.webp"],
+  ["readwise", "/products/readwise.webp"],
+  ["resend", "/products/resend.webp"],
+  ["supercut", "/products/supercut.webp"],
+  ["hma", "/products/hma.webp"],
+  ["magic patterns", "/products/magic-patterns.webp"],
+  ["warp", "/products/warp-build.webp"],
+  ["eleven reader", "/products/elevenreader.webp"],
+  ["elevenlabs", "/products/elevenlabs.webp"],
+  ["eleven", "/products/elevenlabs.webp"],
+  ["notion", "/products/notion.webp"],
+  ["replit", "/products/replit.webp"],
+  ["n8n", "/products/n8n.webp"],
+  ["miro", "/products/miro.webp"],
+  ["mercury", "/products/mercury.webp"],
+  ["nordvpn", "/products/nord-vpn.webp"],
+  ["nord", "/products/nord-vpn.webp"],
+  ["youtube", "/products/yt-premium.webp"],
+  ["apple tv", "/products/apple-tv.webp"],
+  ["lovable", "/products/lovable.webp"],
+  ["duolingo", "/products/duolingo.webp"],
+  ["scribd", "/products/scribd.webp"],
+  ["bolt", "/products/bolt.webp"],
+  ["airtable", "/products/airtable.webp"],
+  ["speechify", "/products/speechify.webp"],
+  ["descript", "/products/descript.webp"],
+  ["azure", "/products/azure.webp"],
+];
 
 export function getProductDisplayImage(name: string, category: string): string {
   const lower = name.toLowerCase();
-  for (const [key, path] of Object.entries(CUSTOM_PRODUCT_IMAGES)) {
+  for (const [key, path] of CUSTOM_PRODUCT_IMAGES) {
     if (lower.includes(key)) {
       return path;
     }
