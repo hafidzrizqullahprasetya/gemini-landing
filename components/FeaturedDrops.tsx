@@ -77,7 +77,7 @@ export function FeaturedDrops({
       collection: "PostgreSQL & Auth Cloud",
       badge: "Developer",
       price: "Rp 588.000",
-      imageSrc: createBrandVectorBadge("Supabase Pro", "Dev & Cloud"),
+      imageSrc: "/products/supabase.webp",
       onSelect: () => {
         const found = products.find((p) => p.name.includes("Supabase"));
         if (found) onSelectProduct(found);

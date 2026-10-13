@@ -209,7 +209,7 @@ export function ProductCatalog({
             {displayedProducts.map((product) => (
               <div
                 key={product.id}
-                className="group rounded-2xl border border-border/50 bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-lg"
+                className="group rounded-2xl border border-border/50 bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:border-border hover:shadow-lg"
               >
                 <div>
                   {/* Thumbnail & Badges */}

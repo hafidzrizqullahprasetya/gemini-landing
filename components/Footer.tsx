@@ -56,7 +56,7 @@ export function Footer() {
               className="rounded-full bg-foreground px-8 py-3.5 text-sm font-semibold text-background shadow-sm transition-opacity duration-200 hover:opacity-90 inline-flex items-center gap-2 cursor-pointer"
             >
               <MessageCircle className="h-4 w-4 text-emerald-500" />
-              <span>WhatsApp Admin (Hafidz Prasetya · 081325081046)</span>
+              <span>WhatsApp Admin</span>
             </a>
           </div>
         </div>

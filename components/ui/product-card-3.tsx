@@ -112,7 +112,7 @@ export const ProductDropCard = ({
             <div
               key={index}
               onClick={item.onSelect}
-              className={`flex-shrink-0 w-full rounded-lg border hairline-border bg-card/60 p-4 text-card-foreground transition-all duration-200 hover:border-primary/40 ${item.onSelect ? "cursor-pointer hover:shadow-md" : ""
+              className={`flex-shrink-0 w-full rounded-lg border hairline-border bg-card/60 p-4 text-card-foreground transition-all duration-200 hover:border-border ${item.onSelect ? "cursor-pointer hover:shadow-md" : ""
                 }`}
               style={{
                 flexBasis: `calc((100% / ${itemsToShow}) - (${(itemsToShow - 1) * 16
