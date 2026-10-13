@@ -281,17 +281,41 @@ export function createBrandVectorBadge(name: string, category: string): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-export function extractDuration(name: string, desc: string): string {
+export function extractDuration(name: string, desc = ""): string {
   const combined = `${name} ${desc}`;
-  const match = combined.match(/(\d+\s*(?:bulan|month|months|m|tahun|year|years|hari|days|d|yr|w))\b/i);
-  if (match && match[1]) {
-    return match[1].toUpperCase();
+  if (/\blifetime\b/i.test(combined)) return "LIFETIME";
+
+  const dayMatch = combined.match(/(\d+)\s*(?:hari|days?|day)\b/i);
+  if (dayMatch && dayMatch[1]) {
+    return `${dayMatch[1]} HARI`;
   }
-  if (/lifetime/i.test(combined)) return "LIFETIME";
-  return "SEBULAN";
+  const shortDay = combined.match(/\b(\d{1,3})\s*D\b/i);
+  if (shortDay && shortDay[1] && Number(shortDay[1]) <= 365) {
+    return `${shortDay[1]} HARI`;
+  }
+
+  const yrMatch = combined.match(/(\d+)\s*(?:tahun|years?|year|yr|yrs)\b/i);
+  if (yrMatch && yrMatch[1]) {
+    return `${yrMatch[1]} TAHUN`;
+  }
+
+  const monthMatch = combined.match(/(\d+)\s*(?:bulan|months?|month|bln)\b/i);
+  if (monthMatch && monthMatch[1]) {
+    return `${monthMatch[1]} BULAN`;
+  }
+  const shortM = combined.match(/\b(\d{1,2})\s*M\b(?!\s*token)/i);
+  if (shortM && shortM[1] && Number(shortM[1]) <= 36) {
+    return `${shortM[1]} BULAN`;
+  }
+  const shortB = combined.match(/\b(\d{1,2})\s*B\b/i);
+  if (shortB && shortB[1] && Number(shortB[1]) <= 36) {
+    return `${shortB[1]} BULAN`;
+  }
+
+  return "1 BULAN";
 }
 
-export function extractWarranty(name: string, desc: string, days: number): string {
+export function extractWarranty(name: string, desc = "", days = 0): string {
   if (days > 0) {
     return `Garansi ${days} Hari`;
   }
@@ -299,18 +323,18 @@ export function extractWarranty(name: string, desc: string, days: number): strin
   if (/FW|Full Warranty|Full Garansi/i.test(combined)) {
     return "Full Garansi";
   }
-  if (/W(\d+)D/i.test(combined)) {
-    const m = combined.match(/W(\d+)D/i);
-    return `Garansi ${m ? m[1] : 7} Hari`;
+  const mw = combined.match(/W(\d+)D/i);
+  if (mw && mw[1]) {
+    return `Garansi ${mw[1]} Hari`;
   }
-  if (/W(\d+)H/i.test(combined)) {
-    const m = combined.match(/W(\d+)H/i);
-    return `Garansi ${m ? m[1] : 24} Jam`;
+  const mh = combined.match(/W(\d+)H/i);
+  if (mh && mh[1]) {
+    return `Garansi ${mh[1]} Jam`;
   }
   if (/NW|No Warranty/i.test(combined)) {
     return "Non-Garansi (Cek Langsung)";
   }
-  return "Garansi 24 Jam";
+  return "Garansi Resmi";
 }
 const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
   ["gemini", "/products/gemini.webp"],

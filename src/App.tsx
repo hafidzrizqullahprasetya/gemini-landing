@@ -7,6 +7,7 @@ import { ProductCatalog } from "@/components/ProductCatalog";
 import { FaqSection } from "@/components/FaqSection";
 import { Footer } from "@/components/Footer";
 import { ProductModal } from "@/components/ProductModal";
+import type { Language } from "@/lib/i18n";
 import {
   initialEnrichedProducts,
   fetchLiveProducts,
@@ -25,8 +26,16 @@ export default function App() {
     return "light";
   });
 
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("prs_lang") as Language | null;
+      if (stored === "id" || stored === "en") return stored;
+    }
+    return "id";
+  });
+
   const [products, setProducts] = useState<EnrichedProduct[]>(
-    initialEnrichedProducts,
+    initialEnrichedProducts
   );
   const [selectedProduct, setSelectedProduct] =
     useState<EnrichedProduct | null>(null);
@@ -57,6 +66,14 @@ export default function App() {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
+  const toggleLang = () => {
+    setLang((prev) => {
+      const next: Language = prev === "id" ? "en" : "id";
+      localStorage.setItem("prs_lang", next);
+      return next;
+    });
+  };
+
   const inStockCount = products.filter((p) => p.is_in_stock).length;
 
   return (
@@ -65,6 +82,8 @@ export default function App() {
       <Navbar
         theme={theme}
         onToggleTheme={toggleTheme}
+        lang={lang}
+        onToggleLang={toggleLang}
         inStockCount={inStockCount}
       />
 
@@ -72,6 +91,7 @@ export default function App() {
         <HeroSection
           totalProducts={products.length}
           inStockCount={inStockCount}
+          lang={lang}
         />
         <FeaturedDrops
           products={products}
@@ -81,6 +101,7 @@ export default function App() {
         <ProductCatalog
           products={products}
           onSelectProduct={setSelectedProduct}
+          lang={lang}
         />
         <FaqSection />
       </main>
@@ -91,6 +112,7 @@ export default function App() {
         product={selectedProduct}
         isOpen={Boolean(selectedProduct)}
         onClose={() => setSelectedProduct(null)}
+        lang={lang}
       />
     </div>
   );

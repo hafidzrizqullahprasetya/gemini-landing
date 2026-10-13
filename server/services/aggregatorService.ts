@@ -117,11 +117,38 @@ function detectCategory(name: string): Exclude<ProductCategory, "Semua"> {
 
 function extractDuration(name: string, desc = ""): string {
   const combined = `${name} ${desc}`;
-  const match = combined.match(/(\d+\s*(?:bulan|month|months|m|tahun|year|years|hari|days|d|yr|w|b))\b/i);
-  if (match && match[1]) {
-    return match[1].toUpperCase();
+  if (/\blifetime\b/i.test(combined)) return "LIFETIME";
+
+  // Days: e.g. "3Day", "7 Days", "30 Hari", "14D"
+  const dayMatch = combined.match(/(\d+)\s*(?:hari|days?|day)\b/i);
+  if (dayMatch && dayMatch[1]) {
+    return `${dayMatch[1]} HARI`;
   }
-  if (/lifetime/i.test(combined)) return "LIFETIME";
+  const shortDay = combined.match(/\b(\d{1,3})\s*D\b/i);
+  if (shortDay && shortDay[1] && Number(shortDay[1]) <= 365) {
+    return `${shortDay[1]} HARI`;
+  }
+
+  // Years: e.g. "1 Tahun", "2 Years", "2 yrs", "1 Yr"
+  const yrMatch = combined.match(/(\d+)\s*(?:tahun|years?|year|yr|yrs)\b/i);
+  if (yrMatch && yrMatch[1]) {
+    return `${yrMatch[1]} TAHUN`;
+  }
+
+  // Months: e.g. "1 Bulan", "6 Months", "12M", "2B"
+  const monthMatch = combined.match(/(\d+)\s*(?:bulan|months?|month|bln)\b/i);
+  if (monthMatch && monthMatch[1]) {
+    return `${monthMatch[1]} BULAN`;
+  }
+  const shortM = combined.match(/\b(\d{1,2})\s*M\b(?!\s*token)/i);
+  if (shortM && shortM[1] && Number(shortM[1]) <= 36) {
+    return `${shortM[1]} BULAN`;
+  }
+  const shortB = combined.match(/\b(\d{1,2})\s*B\b/i);
+  if (shortB && shortB[1] && Number(shortB[1]) <= 36) {
+    return `${shortB[1]} BULAN`;
+  }
+
   return "1 BULAN";
 }
 
@@ -133,18 +160,18 @@ function extractWarranty(name: string, desc = "", days = 0): string {
   if (/FW|Full Warranty|Full Garansi/i.test(combined)) {
     return "Full Garansi";
   }
-  if (/W(\d+)D/i.test(combined)) {
-    const m = combined.match(/W(\d+)D/i);
-    return `Garansi ${m ? m[1] : 7} Hari`;
+  const mw = combined.match(/W(\d+)D/i);
+  if (mw && mw[1]) {
+    return `Garansi ${mw[1]} Hari`;
   }
-  if (/W(\d+)H/i.test(combined)) {
-    const m = combined.match(/W(\d+)H/i);
-    return `Garansi ${m ? m[1] : 24} Jam`;
+  const mh = combined.match(/W(\d+)H/i);
+  if (mh && mh[1]) {
+    return `Garansi ${mh[1]} Jam`;
   }
   if (/NW|No Warranty/i.test(combined)) {
     return "Non-Garansi (Cek Langsung)";
   }
-  return "Garansi 24 Jam";
+  return "Garansi Resmi";
 }
 
 const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [

@@ -17,6 +17,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), octaneApiPlugin()],
   resolve: {
     alias: [
+      { find: /^@\/lib\/(.*)$/, replacement: path.resolve(__dirname, "./lib/$1") },
       { find: /^@\/services\/(.*)$/, replacement: path.resolve(__dirname, "./src/services/$1") },
       { find: /^@\/data\/(.*)$/, replacement: path.resolve(__dirname, "./src/data/$1") },
       { find: "@", replacement: path.resolve(__dirname, ".") },
