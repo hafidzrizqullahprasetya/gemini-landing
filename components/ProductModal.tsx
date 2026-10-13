@@ -52,6 +52,9 @@ export function ProductModal({
   // Midtrans Dynamic QR state
   const [dynamicQr, setDynamicQr] = useState<DynamicQrData | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [paymentSettled, setPaymentSettled] = useState(false);
+  const [activationUrl, setActivationUrl] = useState<string | null>(null);
+  const [copiedActivation, setCopiedActivation] = useState(false);
 
   const t = translations[lang].modal;
   const tCat = translations[lang].catalog;
@@ -61,6 +64,8 @@ export function ProductModal({
     if (!product || !isOpen) {
       setLiveStock(null);
       setDynamicQr(null);
+      setPaymentSettled(false);
+      setActivationUrl(null);
       return;
     }
 
@@ -124,10 +129,31 @@ export function ProductModal({
     };
   }, [product, isOpen]);
 
+  // Poll Midtrans payment status while dynamic QR is active and not yet settled
+  useEffect(() => {
+    if (!dynamicQr?.orderId || paymentSettled || !isOpen) return;
+
+    const interval = setInterval(() => {
+      fetch(`/api/octane/payment-status/${dynamicQr.orderId}?productId=${product?.id || ""}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.isSettled) {
+            setPaymentSettled(true);
+            setActivationUrl(data.activationUrl || null);
+            clearInterval(interval);
+          }
+        })
+        .catch(() => { });
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [dynamicQr?.orderId, paymentSettled, isOpen, product]);
   const handleTestOneRupiah = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!product) return;
     setIsLoadingQr(true);
+    setPaymentSettled(false);
+    setActivationUrl(null);
     fetch("/api/octane/charge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -377,8 +403,8 @@ export function ProductModal({
                 type="button"
                 onClick={() => setActiveTab("qris")}
                 className={`px-3 py-1 rounded-full transition-all cursor-pointer ${activeTab === "qris"
-                    ? "bg-foreground text-background shadow-xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 ⚡ QRIS Otomatis
@@ -387,8 +413,8 @@ export function ProductModal({
                 type="button"
                 onClick={() => setActiveTab("wa")}
                 className={`px-3 py-1 rounded-full transition-all cursor-pointer ${activeTab === "wa"
-                    ? "bg-foreground text-background shadow-xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 💬 Chat WhatsApp
@@ -397,132 +423,228 @@ export function ProductModal({
           </div>
 
           {activeTab === "qris" ? (
-            /* QRIS Card (Midtrans Dynamic QR with Wong Kito Backup) */
-            <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
-                {/* QR Code Graphic */}
-                <div className="w-48 sm:w-52 flex-shrink-0 rounded-xl overflow-hidden border border-border/50 bg-white p-2 shadow-xs relative">
-                  {isLoadingQr && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center text-xs font-mono text-zinc-600 gap-1.5">
-                      <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                      <span>Membuat QRIS...</span>
-                    </div>
-                  )}
-                  <img
-                    src={activeQrSrc}
-                    alt="QRIS Pembayaran"
-                    className="w-full h-auto object-contain"
-                  />
-                  <div className="text-center pt-1.5 pb-0.5">
-                    <span className="text-[10px] font-mono text-zinc-700 font-bold block">
-                      {isUsingDynamicMidtrans
-                        ? "QRIS DINAMIS MIDTRANS"
-                        : "PEMPEK 'ASLI' WONG KITO"}
-                    </span>
-                    <span className="text-[9px] font-mono text-zinc-500 block">
-                      {isUsingDynamicMidtrans
-                        ? `ORDER: ${dynamicQr?.orderId}`
-                        : "NMID: ID1025384010373"}
-                    </span>
-                  </div>
+            paymentSettled ? (
+              /* SUCCESS VIEW: Instant Link Delivery */
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 sm:p-6 text-center space-y-4">
+                <div className="h-14 w-14 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-sm">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                 </div>
 
-                {/* Instructions & Amount */}
-                <div className="flex-1 space-y-3 text-center sm:text-left">
-                  <div>
-                    <span className="text-[11px] font-mono uppercase text-muted-foreground block">
-                      {isUsingDynamicMidtrans
-                        ? "Nominal Terkunci Otomatis di HP Pembeli:"
-                        : lang === "id"
-                          ? "Nominal Transfer Pas:"
-                          : "Exact Amount to Transfer:"}
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold font-display text-foreground">
+                    {lang === "id" ? "Pembayaran Berhasil! (Lunas)" : "Payment Successful!"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">
+                    Order ID: {dynamicQr?.orderId} · {displayFormattedPrice}
+                  </p>
+                </div>
+
+                {/* Activation Link Box */}
+                <div className="rounded-xl border border-border/70 bg-card p-4 text-left space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-foreground uppercase">
+                      {lang === "id" ? "Tautan Aktivasi Akun Anda:" : "Your Account Activation Link:"}
                     </span>
-                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
-                      <span className="text-2xl font-bold font-mono text-primary">
-                        {displayFormattedPrice}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCopyNominal}
-                        title="Salin Angka Nominal"
-                        className="p-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors cursor-pointer"
-                      >
-                        {copiedNominal ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
+                    <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                      SIAP DIAKTIVASI
+                    </span>
                   </div>
 
-                  <div className="text-xs text-muted-foreground space-y-1 leading-relaxed">
-                    <p className="flex items-center gap-1.5 justify-center sm:justify-start">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                      <span>
-                        {isUsingDynamicMidtrans
-                          ? "Scan langsung: Nominal otomatis muncul di m-Banking/E-Wallet Anda"
-                          : "Scan dengan BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay"}
-                      </span>
-                    </p>
-                    <p className="flex items-center gap-1.5 justify-center sm:justify-start">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                      <span>
-                        {lang === "id"
-                          ? "Setelah bayar, klik konfirmasi di bawah untuk aktivasi instan"
-                          : "After paying, click confirm below for instant activation"}
-                      </span>
-                    </p>
+                  <div className="rounded-lg bg-muted/60 p-2.5 font-mono text-xs text-primary break-all border border-border/40 select-all">
+                    {activationUrl || "https://serviceactivation.google.com/subscription/new/OCTANE-ACTIVE"}
                   </div>
 
-                  {/* Action buttons: Download & Test 1 Rupiah */}
-                  <div className="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full text-xs font-mono"
+                  <p className="text-[11px] text-muted-foreground leading-relaxed pt-1">
+                    {lang === "id"
+                      ? "Klik tombol di bawah untuk langsung membuka tautan aktivasi resmi ke email/akun kamu."
+                      : "Click the button below to directly redeem your official license to your email."}
+                  </p>
+                </div>
+
+                {/* Buttons: Direct Link & Copy */}
+                <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                  <Button
+                    asChild
+                    className="flex-1 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-sm cursor-pointer"
+                  >
+                    <a
+                      href={activationUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2"
                     >
-                      <a href={activeQrSrc} download="QRIS-Octane.png">
-                        <Download className="h-3.5 w-3.5 mr-1" />
-                        <span>Download QRIS</span>
-                      </a>
-                    </Button>
+                      <ExternalLink className="h-4 w-4" />
+                      <span>{lang === "id" ? "Buka Link Aktivasi Sekarang" : "Open Activation Link"}</span>
+                    </a>
+                  </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleTestOneRupiah}
-                      className="rounded-full text-xs font-mono text-muted-foreground hover:text-foreground"
-                      title="Uji coba bayar Rp 1 untuk verifikasi mutasi rekening"
-                    >
-                      <Sparkles className="h-3 w-3 mr-1 text-primary" />
-                      <span>Tes Scan Rp 1</span>
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (activationUrl) {
+                        navigator.clipboard.writeText(activationUrl);
+                        setCopiedActivation(true);
+                        setTimeout(() => setCopiedActivation(false), 2000);
+                      }
+                    }}
+                    className="h-12 px-6 rounded-full font-mono text-xs cursor-pointer"
+                  >
+                    {copiedActivation ? (
+                      <>
+                        <Check className="h-4 w-4 text-emerald-500 mr-1.5" />
+                        <span className="text-emerald-500">Tersalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-1.5" />
+                        <span>Salin Link</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Optional WhatsApp Support */}
+                <div className="pt-2 text-xs text-muted-foreground border-t border-border/40 flex items-center justify-between">
+                  <span>Ada pertanyaan aktivasi?</span>
+                  <a
+                    href={waQrisLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>Bantuan WhatsApp</span>
+                  </a>
                 </div>
               </div>
+            ) : (
+              /* QRIS Card (Midtrans Dynamic QR with Wong Kito Backup) */
+              <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
+                  {/* QR Code Graphic */}
+                  <div className="w-48 sm:w-52 flex-shrink-0 rounded-xl overflow-hidden border border-border/50 bg-white p-2 shadow-xs relative">
+                    {isLoadingQr && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center text-xs font-mono text-zinc-600 gap-1.5">
+                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                        <span>Membuat QRIS...</span>
+                      </div>
+                    )}
+                    <img
+                      src={activeQrSrc}
+                      alt="QRIS Pembayaran"
+                      className="w-full h-auto object-contain"
+                    />
+                    <div className="text-center pt-1.5 pb-0.5">
+                      <span className="text-[10px] font-mono text-zinc-700 font-bold block">
+                        {isUsingDynamicMidtrans
+                          ? "QRIS DINAMIS MIDTRANS"
+                          : "PEMPEK 'ASLI' WONG KITO"}
+                      </span>
+                      <span className="text-[9px] font-mono text-zinc-500 block">
+                        {isUsingDynamicMidtrans
+                          ? `ORDER: ${dynamicQr?.orderId}`
+                          : "NMID: ID1025384010373"}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Confirm via WhatsApp Button */}
-              <Button
-                asChild
-                className="w-full h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm cursor-pointer"
-              >
-                <a
-                  href={waQrisLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2"
+                  {/* Instructions & Amount */}
+                  <div className="flex-1 space-y-3 text-center sm:text-left">
+                    <div>
+                      <span className="text-[11px] font-mono uppercase text-muted-foreground block">
+                        {isUsingDynamicMidtrans
+                          ? "Nominal Terkunci Otomatis di HP Pembeli:"
+                          : lang === "id"
+                            ? "Nominal Transfer Pas:"
+                            : "Exact Amount to Transfer:"}
+                      </span>
+                      <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
+                        <span className="text-2xl font-bold font-mono text-primary">
+                          {displayFormattedPrice}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCopyNominal}
+                          title="Salin Angka Nominal"
+                          className="p-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors cursor-pointer"
+                        >
+                          {copiedNominal ? (
+                            <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground space-y-1 leading-relaxed">
+                      <p className="flex items-center gap-1.5 justify-center sm:justify-start">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                        <span>
+                          {isUsingDynamicMidtrans
+                            ? "Scan langsung: Nominal otomatis muncul di m-Banking/E-Wallet Anda"
+                            : "Scan dengan BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay"}
+                        </span>
+                      </p>
+                      <p className="flex items-center gap-1.5 justify-center sm:justify-start">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                        <span>
+                          {lang === "id"
+                            ? "Setelah bayar, klik konfirmasi di bawah untuk aktivasi instan"
+                            : "After paying, click confirm below for instant activation"}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Action buttons: Download & Test 1 Rupiah */}
+                    <div className="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-xs font-mono"
+                      >
+                        <a href={activeQrSrc} download="QRIS-Octane.png">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          <span>Download QRIS</span>
+                        </a>
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleTestOneRupiah}
+                        className="rounded-full text-xs font-mono text-muted-foreground hover:text-foreground"
+                        title="Uji coba bayar Rp 1 untuk verifikasi mutasi rekening"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1 text-primary" />
+                        <span>Tes Scan Rp 1</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Confirm via WhatsApp Button */}
+                <Button
+                  asChild
+                  className="w-full h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm cursor-pointer"
                 >
-                  <MessageCircle className="h-5 w-5" />
-                  <span>
-                    {lang === "id"
-                      ? "Konfirmasi Bukti Transfer via WhatsApp"
-                      : "Confirm Payment via WhatsApp"}
-                  </span>
-                </a>
-              </Button>
-            </div>
+                  <a
+                    href={waQrisLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    <span>
+                      {lang === "id"
+                        ? "Konfirmasi Bukti Transfer via WhatsApp"
+                        : "Confirm Payment via WhatsApp"}
+                    </span>
+                  </a>
+                </Button>
+              </div>
+            )
           ) : (
             /* WhatsApp Direct Mode */
             <div className="space-y-3">

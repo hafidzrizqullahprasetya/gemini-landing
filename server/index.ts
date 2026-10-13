@@ -119,12 +119,59 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
   }
 });
 
-// 5c. Check Midtrans Payment Status
+// Helper to claim or issue activation link from pool or auto-generator
+const DATA_LINKS_PATH = path.resolve(process.cwd(), "data/links.json");
+function claimProductLink(orderId: string, productId?: string): string {
+  try {
+    if (fs.existsSync(DATA_LINKS_PATH)) {
+      const content = fs.readFileSync(DATA_LINKS_PATH, "utf-8");
+      const links: any[] = JSON.parse(content);
+      const existing = links.find((l) => l.order_id === orderId);
+      if (existing) return existing.url;
+
+      let item = links.find((l) => l.status === "available" && productId && productId.toLowerCase().includes(l.product));
+      if (!item) {
+        item = links.find((l) => l.status === "available");
+      }
+
+      if (item) {
+        item.status = "claimed";
+        item.claimed_at = new Date().toISOString();
+        item.order_id = orderId;
+        fs.writeFileSync(DATA_LINKS_PATH, JSON.stringify(links, null, 2), "utf-8");
+        return item.url;
+      }
+    }
+  } catch (err) {
+    console.error("[claimProductLink error]:", err);
+  }
+  return `https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}`;
+}
+
+// 5c. Check Midtrans Payment Status and return link upon settlement
 app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
-    const status = await MidtransService.checkStatus(String(id));
-    res.json(status);
+    const orderId = String(id);
+    const status = await MidtransService.checkStatus(orderId);
+
+    let isSettled = false;
+    let activationUrl: string | null = null;
+
+    if (status.success && status.data) {
+      const txStatus = status.data.transaction_status;
+      if (txStatus === "settlement" || txStatus === "capture") {
+        isSettled = true;
+        const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
+        activationUrl = claimProductLink(orderId, productId);
+      }
+    }
+
+    res.json({
+      ...status,
+      isSettled,
+      activationUrl,
+    });
   } catch (err: any) {
     res.status(500).json({
       success: false,
