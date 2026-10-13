@@ -14,9 +14,10 @@ import {
   Check,
   Layers,
   ExternalLink,
-  QrCode,
   Download,
   CheckCircle2,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 
 interface ProductModalProps {
@@ -24,6 +25,16 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang?: Language;
+}
+
+interface DynamicQrData {
+  qrUrl?: string;
+  qrString?: string;
+  orderId?: string;
+  grossAmount?: number;
+  isDynamic: boolean;
+  isTest?: boolean;
+  message?: string;
 }
 
 export function ProductModal({
@@ -38,6 +49,10 @@ export function ProductModal({
   const [liveStock, setLiveStock] = useState<{ stock: number; inStock: boolean } | null>(null);
   const [isVerifyingStock, setIsVerifyingStock] = useState(false);
 
+  // Midtrans Dynamic QR state
+  const [dynamicQr, setDynamicQr] = useState<DynamicQrData | null>(null);
+  const [isLoadingQr, setIsLoadingQr] = useState(false);
+
   const t = translations[lang].modal;
   const tCat = translations[lang].catalog;
 
@@ -45,6 +60,7 @@ export function ProductModal({
   useEffect(() => {
     if (!product || !isOpen) {
       setLiveStock(null);
+      setDynamicQr(null);
       return;
     }
 
@@ -65,10 +81,83 @@ export function ProductModal({
         if (isMounted) setIsVerifyingStock(false);
       });
 
+    // Auto-fetch Midtrans Dynamic QRIS
+    setIsLoadingQr(true);
+    fetch("/api/octane/charge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId: product.id,
+        grossAmount: product.price_idr,
+        isTest: false,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.success && data.qrUrl) {
+            setDynamicQr({
+              qrUrl: data.qrUrl,
+              qrString: data.qrString,
+              orderId: data.orderId,
+              grossAmount: data.grossAmount,
+              isDynamic: true,
+              isTest: false,
+            });
+          } else {
+            setDynamicQr({
+              isDynamic: false,
+              message: data?.message,
+            });
+          }
+        }
+      })
+      .catch(() => {
+        if (isMounted) setDynamicQr({ isDynamic: false });
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingQr(false);
+      });
+
     return () => {
       isMounted = false;
     };
   }, [product, isOpen]);
+
+  const handleTestOneRupiah = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    setIsLoadingQr(true);
+    fetch("/api/octane/charge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId: product.id,
+        grossAmount: 1,
+        isTest: true,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && data.qrUrl) {
+          setDynamicQr({
+            qrUrl: data.qrUrl,
+            qrString: data.qrString,
+            orderId: data.orderId,
+            grossAmount: 1,
+            isDynamic: true,
+            isTest: true,
+          });
+        } else {
+          setDynamicQr({
+            isDynamic: false,
+            message: data?.message || "Midtrans Server Key belum diatur",
+          });
+        }
+      })
+      .catch(() => { })
+      .finally(() => setIsLoadingQr(false));
+  };
 
   const parsedContent = useMemo(() => {
     if (!product) return { cleanText: "", links: [] as Array<{ label: string; url: string }> };
@@ -114,21 +203,33 @@ export function ProductModal({
       ? t.deliveryTypes.custom_email
       : t.deliveryTypes.instant;
 
+  const currentGrossAmount = dynamicQr?.grossAmount ?? product.price_idr;
+  const displayFormattedPrice =
+    dynamicQr?.isTest
+      ? "Rp 1 (Tes)"
+      : new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+      }).format(currentGrossAmount);
+
   // WhatsApp Messages
   const waQrisConfirmMessage = encodeURIComponent(
     lang === "id"
       ? `Halo Admin Octane (Hafidz Prasetya),\n` +
-      `Saya telah melakukan pembayaran via QRIS (Pempek 'Asli' Wong Kito) untuk pesanan:\n` +
+      `Saya telah melakukan scan & bayar QRIS untuk pesanan:\n` +
       `• Produk: ${product.name}\n` +
       `• ID Produk: #${product.id}\n` +
-      `• Total Bayar: ${product.formatted_price}\n` +
+      `• Order ID: ${dynamicQr?.orderId || "OCT-MANUAL"}\n` +
+      `• Total Bayar: ${displayFormattedPrice}\n` +
       `• Durasi: ${product.duration_label}\n\n` +
       `Berikut saya lampirkan bukti transfernya. Mohon segera diproses kredensial akunnya. Terima kasih!`
       : `Hello Octane Support,\n` +
-      `I have completed payment via QRIS (Pempek 'Asli' Wong Kito) for:\n` +
+      `I have completed payment via QRIS for:\n` +
       `• Product: ${product.name}\n` +
       `• Product ID: #${product.id}\n` +
-      `• Total Amount: ${product.formatted_price}\n` +
+      `• Order ID: ${dynamicQr?.orderId || "OCT-MANUAL"}\n` +
+      `• Total Amount: ${displayFormattedPrice}\n` +
       `• Duration: ${product.duration_label}\n\n` +
       `Attached is my payment proof. Please activate my account. Thank you!`
   );
@@ -163,12 +264,16 @@ export function ProductModal({
   };
 
   const handleCopyNominal = () => {
-    navigator.clipboard.writeText(String(product.price_idr));
+    navigator.clipboard.writeText(String(currentGrossAmount));
     setCopiedNominal(true);
     setTimeout(() => setCopiedNominal(false), 2000);
   };
 
   const isGemini = product.name.toLowerCase().includes("gemini");
+  const isUsingDynamicMidtrans = Boolean(dynamicQr && dynamicQr.isDynamic && dynamicQr.qrUrl);
+  const activeQrSrc = isUsingDynamicMidtrans
+    ? dynamicQr!.qrUrl!
+    : "/qris-pempek-wong-kito.png";
 
   return (
     <Modal
@@ -219,7 +324,7 @@ export function ProductModal({
                 )}
                 {isVerifyingStock && (
                   <span className="text-[10px] font-mono text-muted-foreground animate-pulse">
-                    Syncing...
+                    Live Sync...
                   </span>
                 )}
               </div>
@@ -261,7 +366,6 @@ export function ProductModal({
           </div>
         </div>
 
-
         {/* Payment Mode Selector: QRIS vs WhatsApp */}
         <div className="space-y-3 pt-3 border-t border-border/40">
           <div className="flex items-center justify-between">
@@ -273,18 +377,18 @@ export function ProductModal({
                 type="button"
                 onClick={() => setActiveTab("qris")}
                 className={`px-3 py-1 rounded-full transition-all cursor-pointer ${activeTab === "qris"
-                  ? "bg-foreground text-background shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                    ? "bg-foreground text-background shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
                   }`}
               >
-                ⚡ QRIS Instan
+                ⚡ QRIS Otomatis
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("wa")}
                 className={`px-3 py-1 rounded-full transition-all cursor-pointer ${activeTab === "wa"
-                  ? "bg-foreground text-background shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                    ? "bg-foreground text-background shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 💬 Chat WhatsApp
@@ -293,22 +397,32 @@ export function ProductModal({
           </div>
 
           {activeTab === "qris" ? (
-            /* Official QRIS Card: PEMPEK 'ASLI' WONG KITO */
+            /* QRIS Card (Midtrans Dynamic QR with Wong Kito Backup) */
             <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-4 shadow-sm">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
                 {/* QR Code Graphic */}
-                <div className="w-48 sm:w-52 flex-shrink-0 rounded-xl overflow-hidden border border-border/50 bg-white p-2 shadow-xs">
+                <div className="w-48 sm:w-52 flex-shrink-0 rounded-xl overflow-hidden border border-border/50 bg-white p-2 shadow-xs relative">
+                  {isLoadingQr && (
+                    <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center text-xs font-mono text-zinc-600 gap-1.5">
+                      <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                      <span>Membuat QRIS...</span>
+                    </div>
+                  )}
                   <img
-                    src="/qris-pempek-wong-kito.png"
-                    alt="QRIS Pempek Asli Wong Kito"
+                    src={activeQrSrc}
+                    alt="QRIS Pembayaran"
                     className="w-full h-auto object-contain"
                   />
                   <div className="text-center pt-1.5 pb-0.5">
-                    <span className="text-[10px] font-mono text-zinc-600 font-bold block">
-                      PEMPEK 'ASLI' WONG KITO
+                    <span className="text-[10px] font-mono text-zinc-700 font-bold block">
+                      {isUsingDynamicMidtrans
+                        ? "QRIS DINAMIS MIDTRANS"
+                        : "PEMPEK 'ASLI' WONG KITO"}
                     </span>
-                    <span className="text-[9px] font-mono text-zinc-400 block">
-                      NMID: ID1025384010373
+                    <span className="text-[9px] font-mono text-zinc-500 block">
+                      {isUsingDynamicMidtrans
+                        ? `ORDER: ${dynamicQr?.orderId}`
+                        : "NMID: ID1025384010373"}
                     </span>
                   </div>
                 </div>
@@ -317,11 +431,15 @@ export function ProductModal({
                 <div className="flex-1 space-y-3 text-center sm:text-left">
                   <div>
                     <span className="text-[11px] font-mono uppercase text-muted-foreground block">
-                      {lang === "id" ? "Nominal Transfer Pas" : "Exact Amount to Transfer"}
+                      {isUsingDynamicMidtrans
+                        ? "Nominal Terkunci Otomatis di HP Pembeli:"
+                        : lang === "id"
+                          ? "Nominal Transfer Pas:"
+                          : "Exact Amount to Transfer:"}
                     </span>
                     <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
                       <span className="text-2xl font-bold font-mono text-primary">
-                        {product.formatted_price}
+                        {displayFormattedPrice}
                       </span>
                       <button
                         type="button"
@@ -342,21 +460,22 @@ export function ProductModal({
                     <p className="flex items-center gap-1.5 justify-center sm:justify-start">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                       <span>
-                        {lang === "id"
-                          ? "Mendukung BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay"
-                          : "Supports All Indonesian Banks, GoPay, OVO, Dana & ShopeePay"}
+                        {isUsingDynamicMidtrans
+                          ? "Scan langsung: Nominal otomatis muncul di m-Banking/E-Wallet Anda"
+                          : "Scan dengan BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay"}
                       </span>
                     </p>
                     <p className="flex items-center gap-1.5 justify-center sm:justify-start">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                       <span>
                         {lang === "id"
-                          ? "Setelah scan dan bayar, klik konfirmasi di bawah"
-                          : "After scanning and paying, click confirm below"}
+                          ? "Setelah bayar, klik konfirmasi di bawah untuk aktivasi instan"
+                          : "After paying, click confirm below for instant activation"}
                       </span>
                     </p>
                   </div>
 
+                  {/* Action buttons: Download & Test 1 Rupiah */}
                   <div className="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
                     <Button
                       asChild
@@ -364,10 +483,21 @@ export function ProductModal({
                       size="sm"
                       className="rounded-full text-xs font-mono"
                     >
-                      <a href="/qris-pempek-wong-kito.png" download="QRIS-Pempek-Wong-Kito.png">
+                      <a href={activeQrSrc} download="QRIS-Octane.png">
                         <Download className="h-3.5 w-3.5 mr-1" />
                         <span>Download QRIS</span>
                       </a>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleTestOneRupiah}
+                      className="rounded-full text-xs font-mono text-muted-foreground hover:text-foreground"
+                      title="Uji coba bayar Rp 1 untuk verifikasi mutasi rekening"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1 text-primary" />
+                      <span>Tes Scan Rp 1</span>
                     </Button>
                   </div>
                 </div>
@@ -433,10 +563,13 @@ export function ProductModal({
               )}
             </button>
             <span className="font-mono text-[11px]">
-              {lang === "id" ? "NMID: ID1025384010373 (Wong Kito)" : "NMID: ID1025384010373"}
+              {isUsingDynamicMidtrans
+                ? "Sistem: Midtrans Core API Dynamic"
+                : "NMID: ID1025384010373 (Wong Kito)"}
             </span>
           </div>
         </div>
+
         {/* Wholesale Tiers (if available) */}
         {product.price_tiers && product.price_tiers.length > 0 && (
           <div className="rounded-xl border border-border/40 p-4 bg-muted/20">

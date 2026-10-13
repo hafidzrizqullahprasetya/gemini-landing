@@ -4,6 +4,7 @@ import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
 import { config } from "./config";
+import { MidtransService } from "./services/midtransService";
 import { AggregatorService } from "./services/aggregatorService";
 import { OrderService } from "./services/orderService";
 
@@ -93,6 +94,60 @@ app.post("/api/octane/orders", async (req: Request, res: Response) => {
       success: false,
       error: err.message,
     });
+  }
+});
+
+// 5b. Create Dynamic QRIS Charge (Midtrans Core API)
+app.post("/api/octane/charge", async (req: Request, res: Response) => {
+  try {
+    const { productId, grossAmount, isTest } = req.body;
+    const finalAmount = isTest ? 1 : Number(grossAmount) || 1;
+    const orderId = `OCT-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+
+    const chargeResult = await MidtransService.createQrisCharge({
+      orderId,
+      grossAmount: finalAmount,
+      productName: productId,
+    });
+
+    res.json(chargeResult);
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+// 5c. Check Midtrans Payment Status
+app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
+    const status = await MidtransService.checkStatus(String(id));
+    res.json(status);
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+// 5d. Midtrans Webhook Notification
+app.post(["/api/octane/webhook", "/api/midtrans/notification"], async (req: Request, res: Response) => {
+  try {
+    const data = req.body;
+    const { order_id, status_code, gross_amount, signature_key, transaction_status } = data;
+
+    const isValid = MidtransService.verifySignature(order_id, status_code, gross_amount, signature_key);
+    if (!isValid && process.env.NODE_ENV === "production" && MidtransService.isConfigured()) {
+      return res.status(403).json({ error: "Invalid signature key" });
+    }
+
+    console.log(`[Midtrans Webhook] Order ${order_id} status: ${transaction_status}`);
+    res.json({ status: "ok" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

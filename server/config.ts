@@ -23,6 +23,13 @@ export const config = {
     minPriceIdr: Number(process.env.REZEKI_MIN_PRICE_IDR) || 8500,
   },
 
+  // Payment Gateway: Midtrans Core API (Dynamic QRIS)
+  midtrans: {
+    serverKey: process.env.MIDTRANS_SERVER_KEY || "",
+    clientKey: process.env.MIDTRANS_CLIENT_KEY || "",
+    isProduction: process.env.MIDTRANS_IS_PRODUCTION !== "false",
+  },
+
   // Cache settings
   cacheTtlSeconds: 60,
 };
