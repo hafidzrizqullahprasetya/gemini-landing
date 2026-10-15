@@ -385,7 +385,7 @@ function cleanProductName(name: string): string {
   clean = clean.replace(/ZOOM PRO\s*(\d+)\s*(?:D|DAY)/i, "Zoom Pro ($1 Hari)");
   clean = clean.replace(/Microsoft Office 365 Plus 1 year/i, "Microsoft 365 Plus (1 Tahun)");
   clean = clean.replace(/Miro Lifetime Panel 100 invite/i, "Miro Lifetime (100 Invite Panel)");
-  clean = clean.replace(/Muse AI/i, "Muse AI (1 Miliar Token)");
+  clean = clean.replace(/Muse AI(?:\s*\(1 Miliar Token\))*/i, "Muse AI (1 Miliar Token)");
   clean = clean.replace(/Notion Plus 12M/i, "Notion Plus (1 Tahun)");
   clean = clean.replace(/PICSART 7D 150 Credit/i, "Picsart VIP (7 Hari / 150 Kredit)");
   clean = clean.replace(/Prime Video 6 Months/i, "Prime Video (6 Bulan)");

@@ -32,9 +32,8 @@ export default function App() {
     return "id";
   });
 
-  const [products, setProducts] = useState<EnrichedProduct[]>(
-    initialEnrichedProducts
-  );
+  const [products, setProducts] = useState<EnrichedProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] =
     useState<EnrichedProduct | null>(null);
 
@@ -53,8 +52,16 @@ export default function App() {
 
     const syncLiveProducts = () => {
       fetchLiveProducts().then((live: EnrichedProduct[]) => {
-        if (isMounted && live.length > 0) {
-          setProducts(live);
+        if (isMounted) {
+          if (live.length > 0) {
+            setProducts(live);
+            setSelectedProduct((current) => {
+              if (!current) return null;
+              const refreshed = live.find((p) => p.id === current.id);
+              return refreshed || current;
+            });
+          }
+          setIsLoading(false);
         }
       });
     };
@@ -119,6 +126,7 @@ export default function App() {
           products={products}
           onSelectProduct={setSelectedProduct}
           lang={lang}
+          isLoading={isLoading}
         />
         <ComparisonSection lang={lang} />
         <FaqSection lang={lang} />

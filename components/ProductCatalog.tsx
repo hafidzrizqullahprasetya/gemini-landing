@@ -9,6 +9,7 @@ interface ProductCatalogProps {
   products: EnrichedProduct[];
   onSelectProduct: (product: EnrichedProduct) => void;
   lang?: Language;
+  isLoading?: boolean;
 }
 
 const CATEGORIES: ProductCategory[] = [
@@ -25,6 +26,7 @@ export function ProductCatalog({
   products,
   onSelectProduct,
   lang = "id",
+  isLoading = false,
 }: ProductCatalogProps) {
   const [selectedCategory, setSelectedCategory] =
     useState<ProductCategory>("Semua");
@@ -205,7 +207,43 @@ export function ProductCatalog({
         </div>
 
         {/* Product Cards Grid */}
-        {filteredProducts.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div
+                key={`cat-skeleton-${idx}`}
+                className="rounded-xl sm:rounded-2xl border border-border/40 bg-card flex flex-col justify-between overflow-hidden animate-pulse"
+              >
+                <div>
+                  <div className="aspect-[4/3] sm:aspect-[16/10] w-full bg-muted/60 relative">
+                    <div className="absolute top-2 left-2 h-4 w-16 bg-muted/90 rounded" />
+                    <div className="absolute top-2 right-2 h-4 w-12 bg-muted/90 rounded" />
+                  </div>
+                  <div className="p-3 sm:p-4 space-y-2.5">
+                    <div className="flex justify-between items-center">
+                      <div className="h-3 w-20 bg-muted/60 rounded" />
+                      <div className="h-3 w-14 bg-muted/60 rounded" />
+                    </div>
+                    <div className="h-4 sm:h-5 w-3/4 bg-muted/80 rounded" />
+                    <div className="flex gap-1.5 pt-1">
+                      <div className="h-4 w-12 bg-muted/50 rounded" />
+                      <div className="h-4 w-14 bg-muted/50 rounded" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 sm:p-4 pt-0 mt-auto border-t border-border/40">
+                  <div className="flex items-baseline justify-between pt-3">
+                    <div className="space-y-1">
+                      <div className="h-2.5 w-12 bg-muted/50 rounded" />
+                      <div className="h-4 sm:h-5 w-20 bg-primary/40 rounded" />
+                    </div>
+                    <div className="h-8 w-16 bg-muted/60 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border/60 rounded-2xl bg-card/50">
             <p className="text-muted-foreground text-sm">
               {t.noProducts}
@@ -250,7 +288,7 @@ export function ProductCatalog({
 
                       {/* Duration & Gemini highlight */}
                       <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1">
-                        <div className="bg-background/90 backdrop-blur-sm px-1.5 sm:px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-foreground">
+                        <div className="bg-background/95 px-1.5 sm:px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-foreground">
                           {localizeDuration(product.duration_label, lang)}
                         </div>
                         {isGeminiProduct && (
@@ -264,11 +302,11 @@ export function ProductCatalog({
                       {/* Stock badge */}
                       <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5">
                         {product.is_in_stock ? (
-                          <span className="bg-emerald-500/90 text-white backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-medium">
+                          <span className="bg-emerald-600 text-white px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-medium">
                             {product.stock} Ready
                           </span>
                         ) : (
-                          <span className="bg-muted text-muted-foreground backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono">
+                          <span className="bg-muted/95 text-muted-foreground px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono">
                             {t.outOfStock}
                           </span>
                         )}

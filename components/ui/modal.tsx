@@ -49,13 +49,13 @@ export function Modal({
       aria-labelledby={title ? "modal-title" : undefined}
     >
       <div
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/80 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-xl border hairline-border bg-card p-6 text-card-foreground shadow-2xl transition-all max-h-[90vh] overflow-y-auto",
+          "relative z-10 w-full max-w-lg rounded-xl border hairline-border bg-card p-6 text-card-foreground shadow-2xl transition-opacity duration-150 max-h-[90vh] overflow-y-auto",
           className,
         )}
       >

@@ -377,24 +377,87 @@ export function ProductModal({
     let match;
     while ((match = urlRegex.exec(raw)) !== null) {
       const url = match[1].replace(/[),.]+$/, "");
-      let label = lang === "id" ? "Dokumentasi & Panduan" : "Documentation & Guide";
-      if (url.includes("google.com/document")) label = lang === "id" ? "Panduan Setup (Google Doc)" : "Setup Guide (Google Doc)";
-      else if (url.includes("miraiapi")) label = lang === "id" ? "Portal Aktivasi API" : "API Activation Portal";
-      else if (url.includes("docs")) label = lang === "id" ? "Dokumentasi Resmi" : "Official Docs";
+      if (foundLinks.some((l) => l.url === url)) continue;
 
-      if (!foundLinks.some((l) => l.url === url)) {
-        foundLinks.push({ label, url });
+      const lower = url.toLowerCase();
+      let label = "";
+
+      if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+        label = lang === "id" ? "▶ Video Panduan (YouTube)" : "▶ Video Guide (YouTube)";
+      } else if (lower.includes("dev-api.cc") || lower.includes("otp") || lower.includes("sms")) {
+        label = lang === "id" ? "🔑 Ambil Kode OTP (dev-api.cc)" : "🔑 Get OTP Code (dev-api.cc)";
+      } else if (
+        lower.includes("tmail.pk") ||
+        lower.includes("dongvanfb") ||
+        lower.includes("hitools.pro") ||
+        lower.includes("read_mail") ||
+        lower.includes("read-hotmail") ||
+        lower.includes("tempmail")
+      ) {
+        label = lang === "id" ? "✉️ Akses Temp Mail / Kotak Masuk" : "✉️ Access Temp Mailbox";
+      } else if (lower.includes("telegra.ph")) {
+        label = lang === "id" ? "📄 Panduan Langkah (Telegra.ph)" : "📄 Step Guide (Telegra.ph)";
+      } else if (lower.includes("miraiapi.com")) {
+        if (lower.includes("redeem")) {
+          label = lang === "id" ? "⚡ Redeem Token (Mirai API)" : "⚡ Redeem Token (Mirai)";
+        } else if (lower.includes("config")) {
+          label = lang === "id" ? "⚙️ Panduan Config (Mirai)" : "⚙️ Config Guide (Mirai)";
+        } else {
+          label = lang === "id" ? "📖 Dokumentasi Mirai API" : "📖 Mirai API Docs";
+        }
+      } else if (lower.includes("google.com/document")) {
+        label = lang === "id" ? "📝 Panduan Setup (Google Doc)" : "📝 Setup Guide (Google Doc)";
+      } else if (lower.includes("docs.")) {
+        label = lang === "id" ? "📚 Dokumentasi Resmi" : "📚 Official Docs";
+      } else if (lower.includes("github.com")) {
+        label = lang === "id" ? "🐙 Repositori GitHub" : "🐙 GitHub Repo";
+      } else {
+        try {
+          const domain = new URL(url).hostname.replace(/^www\./, "");
+          label = lang === "id" ? `↗ Buka ${domain}` : `↗ Open ${domain}`;
+        } catch {
+          label = lang === "id" ? "↗ Dokumentasi & Panduan" : "↗ Documentation & Guide";
+        }
       }
+
+      foundLinks.push({ label, url });
     }
+
+    // Ensure link labels are 100% unique so buttons never duplicate
+    const labelCounts = new Map<string, number>();
+    const uniqueLinks = foundLinks.map((item) => {
+      const count = labelCounts.get(item.label) || 0;
+      labelCounts.set(item.label, count + 1);
+      if (count > 0) {
+        return {
+          ...item,
+          label: `${item.label} (${count + 1})`,
+        };
+      }
+      return item;
+    });
 
     const lines = raw
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => l.length > 0 && !l.startsWith("http"));
+      .filter((l) => l.length > 0 && !l.startsWith("http"))
+      .map((l) => {
+        if (/^otp code from here\s*:?$/i.test(l)) {
+          return lang === "id"
+            ? "🔑 Kode OTP: Akses langsung via tombol 'Ambil Kode OTP' di bawah."
+            : "🔑 OTP Code: Access directly via the button below.";
+        }
+        if (/^how to use\s*:?$/i.test(l)) {
+          return lang === "id"
+            ? "▶ Video Panduan: Tonton langkah lengkap via tombol video di bawah."
+            : "▶ Video Guide: Watch complete walkthrough via button below.";
+        }
+        return l;
+      });
 
     return {
       cleanText: lines.join("\n"),
-      links: foundLinks,
+      links: uniqueLinks,
     };
   }, [product, lang]);
 
@@ -488,7 +551,7 @@ export function ProductModal({
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                  <div className="bg-background/90 backdrop-blur-md px-2.5 py-0.5 rounded text-[11px] font-mono font-bold text-foreground">
+                  <div className="bg-background/95 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold text-foreground">
                     {localizeDuration(product.duration_label, lang)}
                   </div>
                   {isGemini && (
@@ -896,12 +959,12 @@ export function ProductModal({
             <div className="rounded-xl bg-muted/40 p-3.5 space-y-2 border border-border/40 text-xs text-muted-foreground leading-relaxed">
               <div className="flex items-center gap-1.5 text-foreground font-medium">
                 <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span>Panduan Pembayaran Instan</span>
+                <span>{lang === "id" ? "Panduan Pembayaran Instan" : "Instant Payment Guide"}</span>
               </div>
               <div className="space-y-1 pl-1">
-                <p>1. Buka <strong>m-Banking</strong> atau <strong>E-Wallet</strong> favorit Anda.</p>
-                <p>2. Scan barcode QRIS di atas (nominal langsung terisi otomatis).</p>
-                <p>3. Masukkan PIN Anda. Begitu sukses, layar ini seketika menyerahkan {quantity} tautan lisensi resmi.</p>
+                <p>1. {lang === "id" ? <>Buka <strong>m-Banking</strong> atau <strong>E-Wallet</strong> favorit Anda.</> : <>Open your preferred <strong>m-Banking</strong> or <strong>E-Wallet</strong> app.</>}</p>
+                <p>2. {lang === "id" ? "Scan barcode QRIS di atas (nominal langsung terisi otomatis)." : "Scan the QRIS code above (amount is pre-filled automatically)."}</p>
+                <p>3. {lang === "id" ? `Masukkan PIN Anda. Begitu pembayaran sukses, layar ini seketika menyerahkan ${quantity > 1 ? `${quantity} detail akun / lisensi resmi` : "detail akun / lisensi resmi"} Anda secara instan.` : `Enter your PIN. Once payment is confirmed, this screen will instantly deliver your ${quantity > 1 ? `${quantity} account credentials / official licenses` : "official account / license credentials"}.`}</p>
               </div>
             </div>
 
