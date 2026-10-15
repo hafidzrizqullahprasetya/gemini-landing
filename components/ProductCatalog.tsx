@@ -276,25 +276,31 @@ export function ProductCatalog({
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-2.5 sm:p-4 space-y-1 sm:space-y-2">
+                    <div className="p-3 sm:p-4 space-y-1.5 sm:space-y-2">
                       <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-muted-foreground font-mono truncate">
                         <span className="truncate pr-1">{localizeCategory(product.category, lang)}</span>
                         <span className="shrink-0">{localizeWarranty(product.warranty_label, lang)}</span>
                       </div>
 
-                      <h3 className="font-semibold text-foreground text-xs sm:text-base tracking-tight leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
+                      <h3 className="font-semibold text-foreground text-xs sm:text-base tracking-tight leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.75rem]">
                         {product.name}
                       </h3>
 
-                      <p className="hidden sm:block text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {product.description.replace(/[🤖⭐️✦🚫⏩🚀💎🔑⚡⏳📋🔹✨🌐📊📖⚠️🔗👉•-]/g, "").trim()}
-                      </p>
+                      {/* Clean feature pills instead of raw messy description */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-[10px] font-mono text-muted-foreground">
+                          {product.delivery_type === "custom_email" ? "✉️ Email Invite" : "⚡ Instan"}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-[10px] font-mono text-muted-foreground">
+                          {product.duration_label}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Footer: Price and CTA */}
-                  <div className="p-2.5 sm:p-4 pt-0 mt-1 sm:mt-2 border-t border-border/40">
-                    <div className="flex items-baseline justify-between pt-2 sm:pt-3">
+                  {/* Footer: Price and CTA (Pinned to bottom) */}
+                  <div className="p-3 sm:p-4 pt-0 mt-auto border-t border-border/40">
+                    <div className="flex items-baseline justify-between pt-2.5 sm:pt-3">
                       <div>
                         <span className="text-muted-foreground block text-[9px] sm:text-[10px] uppercase font-mono">
                           {lang === "id" ? "Harga Satuan" : "Unit Price"}
@@ -313,7 +319,7 @@ export function ProductCatalog({
 
                     <Button
                       onClick={() => onSelectProduct(product)}
-                      className="w-full mt-2 sm:mt-3 h-8 sm:h-10 text-[11px] sm:text-xs font-semibold rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5"
+                      className="w-full mt-2.5 sm:mt-3 h-8 sm:h-10 text-[11px] sm:text-xs font-semibold rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5"
                     >
                       <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                       <span>{t.orderNow}</span>
