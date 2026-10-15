@@ -101,12 +101,21 @@ app.post("/api/octane/orders", async (req: Request, res: Response) => {
 export interface StoredOrder {
   orderId: string;
   productId: string;
+  productName: string;
+  supplier: string;
   quantity: number;
   grossAmount: number;
+  costAmount: number;
+  paymentFee: number;
+  netProfit: number;
   email?: string;
   status: "pending" | "settled" | "failed";
+  deliveredItems?: string[];
+  allDelivered?: boolean;
+  pendingCount?: number;
   fulfilledData?: any;
   createdAt: string;
+  settledAt?: string;
 }
 
 const ORDERS_FILE_PATH = path.resolve(process.cwd(), "data/orders.json");
@@ -154,11 +163,25 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
     });
 
     if (chargeResult.success) {
+      const qty = Math.max(1, Number(quantity) || 1);
+      const product = await AggregatorService.getProductById(String(productId));
+      const productName = product ? product.name : String(productId || "Produk Digital");
+      const supplier = product ? product.supplier : (String(productId).startsWith("r-") ? "rezeki" : "local");
+      const unitCost = product ? (product.original_cost_raw || 0) : 0;
+      const costAmount = unitCost * qty;
+      const paymentFee = Math.round(finalAmount * 0.007); // 0.7% QRIS fee
+      const netProfit = finalAmount - costAmount - paymentFee;
+
       saveOrder({
         orderId,
         productId: String(productId || "gemini"),
-        quantity: Math.max(1, Number(quantity) || 1),
+        productName,
+        supplier,
+        quantity: qty,
         grossAmount: finalAmount,
+        costAmount,
+        paymentFee,
+        netProfit,
         email: email ? String(email).trim() : undefined,
         status: "pending",
         createdAt: new Date().toISOString(),
@@ -329,6 +352,10 @@ async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantit
 
   if (order) {
     order.status = "settled";
+    order.settledAt = new Date().toISOString();
+    order.deliveredItems = deliveredItems;
+    order.allDelivered = deliveredItems.length === quantity;
+    order.pendingCount = pendingCount;
     order.fulfilledData = fulfillmentResult;
     saveOrder(order);
   }
@@ -405,6 +432,65 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
       isSettled: false,
       activationUrl: null,
       activationUrls: [],
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+// 5e. Financial & Transaction Ledger (AI Agent & Analytics Friendly)
+app.get("/api/octane/ledger", async (_req: Request, res: Response) => {
+  try {
+    const orders = Array.from(ordersStore.values());
+    const settled = orders.filter((o) => o.status === "settled");
+    const pending = orders.filter((o) => o.status === "pending");
+    const totalRevenue = settled.reduce((sum, o) => sum + (o.grossAmount || 0), 0);
+    const totalCogs = settled.reduce((sum, o) => sum + (o.costAmount || 0), 0);
+    const totalFees = settled.reduce((sum, o) => sum + (o.paymentFee || 0), 0);
+    const totalNetProfit = totalRevenue - totalCogs - totalFees;
+    const marginPercent = totalRevenue > 0 ? ((totalNetProfit / totalRevenue) * 100).toFixed(1) : "0.0";
+
+    // Read links pool state
+    let linksPool: any[] = [];
+    try {
+      if (fs.existsSync(DATA_LINKS_PATH)) {
+        linksPool = JSON.parse(fs.readFileSync(DATA_LINKS_PATH, "utf-8"));
+      }
+    } catch {}
+
+    const totalLinks = linksPool.length;
+    const availableLinks = linksPool.filter((l) => l.status === "available").length;
+    const claimedLinks = linksPool.filter((l) => l.status === "claimed");
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalOrdersCount: orders.length,
+        settledCount: settled.length,
+        pendingCount: pending.length,
+        totalRevenueIdr: totalRevenue,
+        totalCogsIdr: totalCogs,
+        totalPaymentFeesIdr: totalFees,
+        totalNetProfitIdr: totalNetProfit,
+        marginPercentage: `${marginPercent}%`,
+      },
+      linksPool: {
+        total: totalLinks,
+        available: availableLinks,
+        claimed: claimedLinks.length,
+        claimedLinks: claimedLinks.map((l) => ({
+          id: l.id,
+          product: l.product,
+          orderId: l.order_id,
+          claimedAt: l.claimed_at,
+          url: l.url,
+        })),
+      },
+      orders: orders.slice(-50).reverse(),
     });
   } catch (err: any) {
     res.status(500).json({

@@ -433,6 +433,20 @@ export class AggregatorService {
     let price_idr: number;
     if (lower.includes("gemini") && lower.includes("18")) {
       price_idr = 18000;
+    } else if (lower.includes("spotify")) {
+      price_idr = 24000; // Cost 15.5k -> Profit Rp 8.332
+    } else if (lower.includes("capcut") && lower.includes("month")) {
+      price_idr = 35000; // Cost 23.6k -> Profit Rp 11.155
+    } else if (lower.includes("capcut") && lower.includes("credit")) {
+      price_idr = 49000; // Cost 35.1k -> Profit Rp 13.557
+    } else if (lower.includes("canva") && lower.includes("pro") && !lower.includes("admin")) {
+      price_idr = 22000; // Cost 13.1k -> Profit Rp 8.746
+    } else if (lower.includes("office") || lower.includes("microsoft")) {
+      price_idr = 15000; // Cost 6.7k -> Profit Rp 8.195
+    } else if (lower.includes("claude") && lower.includes("api")) {
+      price_idr = Math.ceil((cost * 1.35) / 500) * 500;
+    } else if (lower.includes("netflix")) {
+      price_idr = Math.ceil((cost * 1.25) / 500) * 500;
     } else {
       price_idr = Math.max(
         config.rezeki.minPriceIdr,
