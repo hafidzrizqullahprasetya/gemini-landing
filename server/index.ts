@@ -197,7 +197,7 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
   }
 });
 
-// Helper to claim or issue activation links from pool or auto-generator (supports quantity >= 1)
+// Helper to claim links from real pool (returns only genuine available links)
 const DATA_LINKS_PATH = path.resolve(process.cwd(), "data/links.json");
 function claimProductLinks(orderId: string, productId?: string, quantity: number = 1): string[] {
   const result: string[] = [];
@@ -222,7 +222,8 @@ function claimProductLinks(orderId: string, productId?: string, quantity: number
           item.order_id = orderId;
           result.push(item.url);
         } else {
-          result.push(`https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}-${i + 1}`);
+          // No more real links in pool
+          break;
         }
       }
       fs.writeFileSync(DATA_LINKS_PATH, JSON.stringify(links, null, 2), "utf-8");
@@ -232,9 +233,6 @@ function claimProductLinks(orderId: string, productId?: string, quantity: number
     console.error("[claimProductLinks error]:", err);
   }
 
-  while (result.length < quantity) {
-    result.push(`https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}-${result.length + 1}`);
-  }
   return result;
 }
 
