@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { EnrichedProduct } from "@/services/venteApi";
+import { createBrandVectorBadge, type EnrichedProduct } from "@/services/venteApi";
 import type { Language } from "@/lib/i18n";
 import { translations, localizeCategory, localizeDuration, localizeWarranty } from "@/lib/i18n";
 import {
@@ -480,8 +480,11 @@ export function ProductModal({
               {/* Product Thumbnail */}
               <div className="sm:col-span-5 aspect-video sm:aspect-square w-full rounded-xl overflow-hidden bg-muted/40 border border-border/40 relative">
                 <img
-                  src={product.display_image}
+                  src={product.display_image || createBrandVectorBadge(product.name, product.category)}
                   alt={product.name}
+                  onError={(e) => {
+                    e.currentTarget.src = createBrandVectorBadge(product.name, product.category);
+                  }}
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">

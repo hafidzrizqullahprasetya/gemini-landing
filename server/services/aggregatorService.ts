@@ -433,17 +433,14 @@ export class AggregatorService {
     const name = cleanProductName(raw.name);
     const description = cleanHtmlAndTelegramTags(raw.description);
     const category = detectCategory(name);
-    const lower = name.toLowerCase();
+    const costIdr = Math.ceil(raw.price_usd * config.vente.usdRate);
 
-    let price_idr: number;
-    if (lower.includes("gemini") && lower.includes("18")) {
-      price_idr = 18000;
-    } else if (lower.includes("gemini")) {
-      price_idr = 12000;
-    } else {
-      const rawIdr = raw.price_usd * config.vente.usdRate;
-      price_idr = Math.max(15000, Math.ceil((rawIdr * 1.3) / 500) * 500);
-    }
+    // Target profit rata: Rp 7.500 per akun (net profit ~Rp 7.000 - Rp 8.000 setelah fee QRIS)
+    const TARGET_PROFIT = 7500;
+    const price_idr = Math.max(
+      8500,
+      Math.ceil((costIdr + TARGET_PROFIT) / 500) * 500
+    );
 
     return {
       id: `v-${raw.id}`,
@@ -519,15 +516,24 @@ export class AggregatorService {
     this.isFetching = true;
 
     try {
-      // Fetch Indonesian Provider ONLY (Rezeki Shop)
-      const rezekiProducts = await RezekiService.fetchProducts().catch(() => []);
+      const [rezekiRes, venteRes] = await Promise.allSettled([
+        RezekiService.fetchProducts(),
+        VenteService.fetchProducts(),
+      ]);
+
       const items: OctaneProduct[] = [];
 
-      if (Array.isArray(rezekiProducts)) {
-        rezekiProducts.forEach((p) => items.push(this.transformRezeki(p)));
+      // 1. Prioritize Rezeki (Rupiah Supplier - Primary)
+      if (rezekiRes.status === "fulfilled" && Array.isArray(rezekiRes.value)) {
+        rezekiRes.value.forEach((p) => items.push(this.transformRezeki(p)));
       }
 
-      // Deduplicate by normalized name + duration + category
+      // 2. Vente Supplier (USD Supplier - Seamlessly ready whenever live)
+      if (venteRes.status === "fulfilled" && Array.isArray(venteRes.value)) {
+        venteRes.value.forEach((p) => items.push(this.transformVente(p)));
+      }
+
+      // Deduplicate by normalized name + duration + category (Rezeki IDR takes priority)
       const dedupMap = new Map<string, OctaneProduct>();
       for (const item of items) {
         const key = getCanonicalProductKey(item);
@@ -535,7 +541,12 @@ export class AggregatorService {
         if (!existing) {
           dedupMap.set(key, item);
         } else {
-          if (!existing.is_in_stock && item.is_in_stock) {
+          // Rezeki always takes priority over Vente
+          if (item.supplier === "rezeki" && existing.supplier === "vente") {
+            dedupMap.set(key, item);
+          } else if (existing.supplier === "rezeki" && item.supplier === "vente") {
+            // Keep existing Rezeki
+          } else if (!existing.is_in_stock && item.is_in_stock) {
             dedupMap.set(key, item);
           } else if (existing.is_in_stock === item.is_in_stock && item.price_idr < existing.price_idr) {
             dedupMap.set(key, item);
@@ -605,12 +616,20 @@ export class AggregatorService {
   }
 
   static async getSuppliersHealth(): Promise<SupplierHealth[]> {
-    const rezekiHealth = await RezekiService.getProfileAndBalance();
+    const [rezekiHealth, venteHealth] = await Promise.all([
+      RezekiService.getProfileAndBalance(),
+      VenteService.getProfileAndBalance(),
+    ]);
     return [
       {
         source: "rezeki",
         name: "Rezeki Shop API (Provider Indo Aktif)",
         ...rezekiHealth,
+      },
+      {
+        source: "vente",
+        name: "Vente Telegram Reseller (Provider USD Standby)",
+        ...venteHealth,
       },
     ];
   }

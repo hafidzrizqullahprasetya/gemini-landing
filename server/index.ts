@@ -281,17 +281,17 @@ async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantit
         break;
       }
     }
-  } else if (productId.startsWith("r-")) {
-    // Other Rezeki products (Canva, CapCut, Claude API, etc.)
+  } else if (productId.startsWith("r-") || productId.startsWith("v-")) {
+    // Rezeki (IDR) or Vente (USD) products
     for (let i = 0; i < quantity; i++) {
       try {
-        const rezekiResult = await OrderService.handleOrder({
+        const orderResult = await OrderService.handleOrder({
           productId,
           quantity: 1,
           email,
         });
-        if (rezekiResult.success && rezekiResult.accountDetails) {
-          deliveredItems.push(String(rezekiResult.accountDetails).trim());
+        if (orderResult.success && orderResult.accountDetails) {
+          deliveredItems.push(String(orderResult.accountDetails).trim());
         } else {
           pendingCount += (quantity - i);
           break;
