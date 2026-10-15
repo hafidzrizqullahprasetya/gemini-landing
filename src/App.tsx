@@ -115,12 +115,12 @@ export default function App() {
           onSelectProduct={setSelectedProduct}
           lang={lang}
         />
-        <ComparisonSection lang={lang} />
         <ProductCatalog
           products={products}
           onSelectProduct={setSelectedProduct}
           lang={lang}
         />
+        <ComparisonSection lang={lang} />
         <FaqSection lang={lang} />
       </main>
 
