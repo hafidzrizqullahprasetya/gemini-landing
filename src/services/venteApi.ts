@@ -3,6 +3,7 @@ import rawProducts from "../data/initialProducts.json";
 export interface VenteProduct {
   id: number | string;
   supplier?: "vente" | "rezeki";
+  supplier_product_id?: string;
   name: string;
   description: string;
   emoji?: string;

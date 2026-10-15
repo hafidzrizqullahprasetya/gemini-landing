@@ -37,6 +37,40 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] =
     useState<EnrichedProduct | null>(null);
 
+  const getUrlProductId = (): string | null => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const fromParam = params.get("p") || params.get("product") || params.get("id");
+    if (fromParam) return fromParam;
+    const match = window.location.pathname.match(/^\/p\/([^/?#]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return null;
+  };
+
+  const handleSelectProduct = (product: EnrichedProduct) => {
+    setSelectedProduct(product);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("p", String(product.id));
+      window.history.pushState({ productId: product.id }, "", url.toString());
+    }
+  };
+
+  const handleCloseProduct = () => {
+    setSelectedProduct(null);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("p");
+      url.searchParams.delete("product");
+      url.searchParams.delete("id");
+      let cleanPath = url.pathname;
+      if (cleanPath.startsWith("/p/")) {
+        cleanPath = "/";
+      }
+      window.history.pushState({}, "", `${cleanPath}${url.search}`);
+    }
+  };
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -55,10 +89,15 @@ export default function App() {
         if (isMounted) {
           if (live.length > 0) {
             setProducts(live);
+            const urlId = getUrlProductId();
             setSelectedProduct((current) => {
-              if (!current) return null;
-              const refreshed = live.find((p) => p.id === current.id);
-              return refreshed || current;
+              if (current) {
+                return live.find((p) => p.id === current.id) || current;
+              }
+              if (urlId) {
+                return live.find((p) => String(p.id) === urlId || p.supplier_product_id === urlId) || null;
+              }
+              return null;
             });
           }
           setIsLoading(false);
@@ -85,6 +124,21 @@ export default function App() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const id = getUrlProductId();
+      if (id) {
+        const found = products.find((p) => String(p.id) === id || p.supplier_product_id === id);
+        if (found) setSelectedProduct(found);
+      } else {
+        setSelectedProduct(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [products]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -119,12 +173,12 @@ export default function App() {
         />
         <FeaturedDrops
           products={products}
-          onSelectProduct={setSelectedProduct}
+          onSelectProduct={handleSelectProduct}
           lang={lang}
         />
         <ProductCatalog
           products={products}
-          onSelectProduct={setSelectedProduct}
+          onSelectProduct={handleSelectProduct}
           lang={lang}
           isLoading={isLoading}
         />
@@ -137,7 +191,7 @@ export default function App() {
       <ProductModal
         product={selectedProduct}
         isOpen={Boolean(selectedProduct)}
-        onClose={() => setSelectedProduct(null)}
+        onClose={handleCloseProduct}
         lang={lang}
       />
     </div>

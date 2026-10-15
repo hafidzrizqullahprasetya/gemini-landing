@@ -24,6 +24,7 @@ import {
   Mail,
   Minus,
   Plus,
+  Share2,
 } from "lucide-react";
 
 interface ProductModalProps {
@@ -57,6 +58,7 @@ export function ProductModal({
 
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedNominal, setCopiedNominal] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -512,6 +514,17 @@ export function ProductModal({
     setTimeout(() => setCopiedNominal(false), 2000);
   };
 
+  const getProductShareUrl = () => {
+    if (typeof window === "undefined") return `https://octane.web.id/?p=${product.id}`;
+    return `${window.location.origin}/?p=${encodeURIComponent(product.id)}`;
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(getProductShareUrl());
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -566,22 +579,21 @@ export function ProductModal({
               <div className="sm:col-span-7 flex flex-col justify-between space-y-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge
-                      variant={currentInStock ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {currentInStock
-                        ? `${tCat.ready} (${currentStock})`
-                        : tCat.outOfStock}
-                    </Badge>
+                    {isVerifyingStock && liveStock === null ? (
+                      <div className="h-5 w-20 rounded-full bg-muted/60 animate-pulse" />
+                    ) : (
+                      <Badge
+                        variant={currentInStock ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {currentInStock
+                          ? `${tCat.ready} (${currentStock})`
+                          : tCat.outOfStock}
+                      </Badge>
+                    )}
                     {product.price_usd && (
                       <span className="text-xs font-mono text-muted-foreground">
                         ${product.price_usd} USD / unit
-                      </span>
-                    )}
-                    {isVerifyingStock && (
-                      <span className="text-[10px] font-mono text-muted-foreground animate-pulse">
-                        Live Sync...
                       </span>
                     )}
                   </div>
@@ -640,9 +652,13 @@ export function ProductModal({
                     {lang === "id" ? "Jumlah Pembelian (Quantity)" : "Purchase Quantity"}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-mono">
-                    {lang === "id"
-                      ? `Stok tersedia: ${currentStock} akun`
-                      : `Available stock: ${currentStock} accounts`}
+                    {isVerifyingStock && liveStock === null ? (
+                      <span className="inline-block h-3.5 w-28 bg-muted/60 rounded animate-pulse" />
+                    ) : (
+                      lang === "id"
+                        ? `Stok tersedia: ${currentStock} akun`
+                        : `Available stock: ${currentStock} accounts`
+                    )}
                   </span>
                 </div>
 
@@ -791,24 +807,45 @@ export function ProductModal({
                 </span>
               </Button>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                <button
-                  type="button"
-                  onClick={handleCopySummary}
-                  className="flex items-center gap-1.5 hover:text-foreground text-[11px] font-mono transition-colors cursor-pointer"
-                >
-                  {copiedSummary ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-emerald-500">{t.copied}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      <span>{t.copySummary}</span>
-                    </>
-                  )}
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground pt-1">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-1.5 hover:text-foreground text-[11px] font-mono transition-colors cursor-pointer"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">{lang === "id" ? "Link Tersalin!" : "Link Copied!"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-foreground">{lang === "id" ? "Salin Link Produk" : "Copy Product Link"}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopySummary}
+                    className="flex items-center gap-1.5 hover:text-foreground text-[11px] font-mono transition-colors cursor-pointer"
+                  >
+                    {copiedSummary ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">{t.copied}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>{t.copySummary}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 <a
                   href={waInquiryLink}
                   target="_blank"
@@ -816,7 +853,7 @@ export function ProductModal({
                   className="hover:text-foreground text-[11px] inline-flex items-center gap-1 transition-colors"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>{lang === "id" ? "Tanya via WhatsApp" : "Inquire via WhatsApp"}</span>
+                  <span>{lang === "id" ? "Tanya via WA" : "Inquire via WhatsApp"}</span>
                 </a>
               </div>
             </div>
