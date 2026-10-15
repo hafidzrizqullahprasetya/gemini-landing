@@ -428,31 +428,14 @@ export class AggregatorService {
     const description = cleanHtmlAndTelegramTags(raw.description);
     const category = detectCategory(name);
     const cost = raw.price_idr;
-    const lower = name.toLowerCase();
 
-    let price_idr: number;
-    if (lower.includes("gemini") && lower.includes("18")) {
-      price_idr = 18000;
-    } else if (lower.includes("spotify")) {
-      price_idr = 24000; // Cost 15.5k -> Profit Rp 8.332
-    } else if (lower.includes("capcut") && lower.includes("month")) {
-      price_idr = 35000; // Cost 23.6k -> Profit Rp 11.155
-    } else if (lower.includes("capcut") && lower.includes("credit")) {
-      price_idr = 49000; // Cost 35.1k -> Profit Rp 13.557
-    } else if (lower.includes("canva") && lower.includes("pro") && !lower.includes("admin")) {
-      price_idr = 22000; // Cost 13.1k -> Profit Rp 8.746
-    } else if (lower.includes("office") || lower.includes("microsoft")) {
-      price_idr = 15000; // Cost 6.7k -> Profit Rp 8.195
-    } else if (lower.includes("claude") && lower.includes("api")) {
-      price_idr = Math.ceil((cost * 1.35) / 500) * 500;
-    } else if (lower.includes("netflix")) {
-      price_idr = Math.ceil((cost * 1.25) / 500) * 500;
-    } else {
-      price_idr = Math.max(
-        config.rezeki.minPriceIdr,
-        Math.ceil((cost * (1 + config.rezeki.marginPercent / 100)) / 500) * 500
-      );
-    }
+    // Target profit rata: Rp 7.500 per akun (net profit ~Rp 7.000 - Rp 8.000 setelah fee QRIS)
+    const TARGET_PROFIT = 7500;
+    const price_idr = Math.max(
+      config.rezeki.minPriceIdr,
+      Math.ceil((cost + TARGET_PROFIT) / 500) * 500
+    );
+
     const inStock = raw.availability === "in_stock";
     const rawStock = (raw as any).stock;
     const stock = typeof rawStock === "number" ? rawStock : (inStock ? 10 : 0);
@@ -493,33 +476,15 @@ export class AggregatorService {
     this.isFetching = true;
 
     try {
-      const [venteRes, rezekiRes] = await Promise.allSettled([
-        VenteService.fetchProducts(),
-        RezekiService.fetchProducts(),
-      ]);
-
+      // Fetch Indonesian Provider ONLY (Rezeki Shop)
+      const rezekiProducts = await RezekiService.fetchProducts().catch(() => []);
       const items: OctaneProduct[] = [];
 
-      // 1. Prioritize Rezeki (Rupiah Supplier - Primary)
-      if (rezekiRes.status === "fulfilled" && Array.isArray(rezekiRes.value)) {
-        rezekiRes.value.forEach((p) => items.push(this.transformRezeki(p)));
+      if (Array.isArray(rezekiProducts)) {
+        rezekiProducts.forEach((p) => items.push(this.transformRezeki(p)));
       }
 
-      // 2. Vente Supplier (Gemini hero products + active items if live)
-      const isVenteLive = venteRes.status === "fulfilled" && Array.isArray(venteRes.value);
-      if (isVenteLive) {
-        venteRes.value.forEach((p) => items.push(this.transformVente(p)));
-      } else {
-        // Fallback: keep Gemini hero products from Vente / local pool
-        (initialVenteData as any[])
-          .filter((p) => p.id !== 2147483000)
-          .filter((p) => p.name.toLowerCase().includes("gemini"))
-          .forEach((p) => items.push(this.transformVente(p)));
-      }
-
-      // Smart Deduplication:
-      // Group by normalized name + duration + category
-      // Priority: Rezeki (Rupiah) wins over Vente; keep in-stock & cheaper retail price
+      // Deduplicate by normalized name + duration + category
       const dedupMap = new Map<string, OctaneProduct>();
       for (const item of items) {
         const key = getCanonicalProductKey(item);
@@ -527,12 +492,7 @@ export class AggregatorService {
         if (!existing) {
           dedupMap.set(key, item);
         } else {
-          // Always prioritize Rezeki (Rupiah provider) over Vente unless existing is Gemini
-          if (item.supplier === "rezeki" && existing.supplier === "vente" && !existing.name.toLowerCase().includes("gemini")) {
-            dedupMap.set(key, item);
-          } else if (existing.supplier === "rezeki" && item.supplier === "vente") {
-            // Keep existing Rezeki
-          } else if (!existing.is_in_stock && item.is_in_stock) {
+          if (!existing.is_in_stock && item.is_in_stock) {
             dedupMap.set(key, item);
           } else if (existing.is_in_stock === item.is_in_stock && item.price_idr < existing.price_idr) {
             dedupMap.set(key, item);
@@ -562,13 +522,6 @@ export class AggregatorService {
       this.isFetching = false;
     }
 
-    // Safety fallback
-    if (this.cachedProducts.length === 0) {
-      this.cachedProducts = (initialVenteData as any[])
-        .filter((p) => p.id !== 2147483000)
-        .map((p) => this.transformVente(p));
-    }
-
     return this.cachedProducts;
   }
 
@@ -593,20 +546,11 @@ export class AggregatorService {
   }
 
   static async getSuppliersHealth(): Promise<SupplierHealth[]> {
-    const [venteHealth, rezekiHealth] = await Promise.all([
-      VenteService.getProfileAndBalance(),
-      RezekiService.getProfileAndBalance(),
-    ]);
-
+    const rezekiHealth = await RezekiService.getProfileAndBalance();
     return [
       {
-        source: "vente",
-        name: "Vente Telegram Reseller (Supplier 1)",
-        ...venteHealth,
-      },
-      {
         source: "rezeki",
-        name: "Rezeki Shop API (Supplier 2)",
+        name: "Rezeki Shop API (Provider Indo Aktif)",
         ...rezekiHealth,
       },
     ];
