@@ -390,8 +390,17 @@ export class AggregatorService {
     const name = cleanProductName(raw.name);
     const description = cleanHtmlAndTelegramTags(raw.description);
     const category = detectCategory(name);
-    const rawIdr = raw.price_usd * config.vente.usdRate;
-    const price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
+    const lower = name.toLowerCase();
+
+    let price_idr: number;
+    if (lower.includes("gemini") && lower.includes("18")) {
+      price_idr = 18000;
+    } else if (lower.includes("gemini")) {
+      price_idr = 12000;
+    } else {
+      const rawIdr = raw.price_usd * config.vente.usdRate;
+      price_idr = Math.max(15000, Math.ceil((rawIdr * 1.3) / 500) * 500);
+    }
 
     return {
       id: `v-${raw.id}`,
@@ -419,11 +428,20 @@ export class AggregatorService {
     const description = cleanHtmlAndTelegramTags(raw.description);
     const category = detectCategory(name);
     const cost = raw.price_idr;
-    const price_idr = Math.max(
-      config.rezeki.minPriceIdr,
-      Math.ceil((cost * (1 + config.rezeki.marginPercent / 100)) / 500) * 500
-    );
+    const lower = name.toLowerCase();
+
+    let price_idr: number;
+    if (lower.includes("gemini") && lower.includes("18")) {
+      price_idr = 18000;
+    } else {
+      price_idr = Math.max(
+        config.rezeki.minPriceIdr,
+        Math.ceil((cost * (1 + config.rezeki.marginPercent / 100)) / 500) * 500
+      );
+    }
     const inStock = raw.availability === "in_stock";
+    const rawStock = (raw as any).stock;
+    const stock = typeof rawStock === "number" ? rawStock : (inStock ? 10 : 0);
 
     return {
       id: `r-${raw.id}`,
@@ -436,8 +454,8 @@ export class AggregatorService {
       formatted_price: formatIDR(price_idr),
       original_cost_raw: cost,
       original_currency: "IDR",
-      stock: inStock ? 10 : 0,
-      is_in_stock: inStock,
+      stock,
+      is_in_stock: inStock && stock > 0,
       duration_label: extractDuration(name, description),
       warranty_label: extractWarranty(name, description, 0),
       display_image: getDisplayImage(name),
@@ -468,22 +486,26 @@ export class AggregatorService {
 
       const items: OctaneProduct[] = [];
 
-      if (venteRes.status === "fulfilled" && Array.isArray(venteRes.value)) {
-        venteRes.value.forEach((p) => items.push(this.transformVente(p)));
-      } else {
-        // Fallback to static cache for Vente if API has hiccup
-        (initialVenteData as any[])
-          .filter((p) => p.id !== 2147483000)
-          .forEach((p) => items.push(this.transformVente(p)));
-      }
-
+      // 1. Prioritize Rezeki (Rupiah Supplier - Primary)
       if (rezekiRes.status === "fulfilled" && Array.isArray(rezekiRes.value)) {
         rezekiRes.value.forEach((p) => items.push(this.transformRezeki(p)));
       }
 
+      // 2. Vente Supplier (Gemini hero products + active items if live)
+      const isVenteLive = venteRes.status === "fulfilled" && Array.isArray(venteRes.value);
+      if (isVenteLive) {
+        venteRes.value.forEach((p) => items.push(this.transformVente(p)));
+      } else {
+        // Fallback: keep Gemini hero products from Vente / local pool
+        (initialVenteData as any[])
+          .filter((p) => p.id !== 2147483000)
+          .filter((p) => p.name.toLowerCase().includes("gemini"))
+          .forEach((p) => items.push(this.transformVente(p)));
+      }
+
       // Smart Deduplication:
       // Group by normalized name + duration + category
-      // If two items are duplicate: keep in-stock & cheaper retail price
+      // Priority: Rezeki (Rupiah) wins over Vente; keep in-stock & cheaper retail price
       const dedupMap = new Map<string, OctaneProduct>();
       for (const item of items) {
         const key = getCanonicalProductKey(item);
@@ -491,7 +513,12 @@ export class AggregatorService {
         if (!existing) {
           dedupMap.set(key, item);
         } else {
-          if (!existing.is_in_stock && item.is_in_stock) {
+          // Always prioritize Rezeki (Rupiah provider) over Vente unless existing is Gemini
+          if (item.supplier === "rezeki" && existing.supplier === "vente" && !existing.name.toLowerCase().includes("gemini")) {
+            dedupMap.set(key, item);
+          } else if (existing.supplier === "rezeki" && item.supplier === "vente") {
+            // Keep existing Rezeki
+          } else if (!existing.is_in_stock && item.is_in_stock) {
             dedupMap.set(key, item);
           } else if (existing.is_in_stock === item.is_in_stock && item.price_idr < existing.price_idr) {
             dedupMap.set(key, item);

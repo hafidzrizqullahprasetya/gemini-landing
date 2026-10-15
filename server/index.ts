@@ -97,11 +97,54 @@ app.post("/api/octane/orders", async (req: Request, res: Response) => {
   }
 });
 
+// In-memory order registry with disk backup (data/orders.json)
+export interface StoredOrder {
+  orderId: string;
+  productId: string;
+  quantity: number;
+  grossAmount: number;
+  email?: string;
+  status: "pending" | "settled" | "failed";
+  fulfilledData?: any;
+  createdAt: string;
+}
+
+const ORDERS_FILE_PATH = path.resolve(process.cwd(), "data/orders.json");
+
+function loadOrders(): Map<string, StoredOrder> {
+  const map = new Map<string, StoredOrder>();
+  try {
+    if (fs.existsSync(ORDERS_FILE_PATH)) {
+      const list: StoredOrder[] = JSON.parse(fs.readFileSync(ORDERS_FILE_PATH, "utf-8"));
+      list.forEach((o) => map.set(o.orderId, o));
+    }
+  } catch (err) {
+    console.error("[Orders] Failed to load data/orders.json:", err);
+  }
+  return map;
+}
+
+const ordersStore = loadOrders();
+
+function saveOrder(order: StoredOrder) {
+  ordersStore.set(order.orderId, order);
+  try {
+    const list = Array.from(ordersStore.values());
+    fs.writeFileSync(ORDERS_FILE_PATH, JSON.stringify(list, null, 2), "utf-8");
+  } catch (err) {
+    console.error("[Orders] Failed to save order:", err);
+  }
+}
+
 // 5b. Create Dynamic QRIS Charge (Midtrans Core API)
 app.post("/api/octane/charge", async (req: Request, res: Response) => {
   try {
-    const { productId, grossAmount, isTest } = req.body;
-    const finalAmount = isTest ? 1 : Number(grossAmount) || 1;
+    const { productId, grossAmount, isTest, quantity = 1, email } = req.body;
+    
+    // Security check: Only allow isTest if explicitly authorized in dev
+    const allowTest = process.env.NODE_ENV !== "production" || req.query.dev === "true" || req.headers["x-octane-dev"] === "true";
+    const finalTest = Boolean(isTest && allowTest);
+    const finalAmount = finalTest ? 1 : Math.max(1000, Number(grossAmount) || 1000);
     const orderId = `OCT-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
 
     const chargeResult = await MidtransService.createQrisCharge({
@@ -109,6 +152,18 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
       grossAmount: finalAmount,
       productName: productId,
     });
+
+    if (chargeResult.success) {
+      saveOrder({
+        orderId,
+        productId: String(productId || "gemini"),
+        quantity: Math.max(1, Number(quantity) || 1),
+        grossAmount: finalAmount,
+        email: email ? String(email).trim() : undefined,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      });
+    }
 
     res.json(chargeResult);
   } catch (err: any) {
@@ -160,14 +215,92 @@ function claimProductLinks(orderId: string, productId?: string, quantity: number
   return result;
 }
 
+// Unified order fulfillment (supports Gemini pool, Rezeki API, and admin fallback)
+async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantity?: number) {
+  const order = ordersStore.get(orderId);
+  const productId = order ? order.productId : hintProductId;
+  const quantity = order ? order.quantity : (hintQuantity || 1);
+  const email = order ? order.email : undefined;
+
+  if (order && order.status === "settled" && order.fulfilledData) {
+    return order.fulfilledData;
+  }
+
+  const isGemini = productId ? (productId.toLowerCase().includes("gemini") || productId === "v-16" || productId === "v-230") : true;
+  let fulfillmentResult: any;
+
+  if (isGemini) {
+    const urls = claimProductLinks(orderId, productId, quantity);
+    fulfillmentResult = {
+      isSettled: true,
+      orderId,
+      activationUrl: urls[0],
+      activationUrls: urls,
+      message: `${quantity} Akun Gemini Resmi berhasil diaktivasi!`,
+    };
+  } else if (productId && productId.startsWith("r-")) {
+    try {
+      const result = await OrderService.handleOrder({
+        productId,
+        quantity,
+        email,
+      });
+      if (result.success) {
+        const details = result.accountDetails || "Akun berhasil diproses.";
+        fulfillmentResult = {
+          isSettled: true,
+          orderId,
+          accountDetails: details,
+          activationUrl: details.startsWith("http") ? details : undefined,
+          activationUrls: [details],
+          message: result.message,
+        };
+      } else {
+        fulfillmentResult = {
+          isSettled: true,
+          orderId,
+          accountDetails: `Pesanan #${orderId} telah terverifikasi lunas. Hubungi WhatsApp Admin (0813-2508-1046) dengan invoice ini untuk serah terima akun instan.`,
+          activationUrls: [`Pesanan #${orderId} Tercatat Lunas — Hubungi Admin WhatsApp`],
+          message: "Pembayaran terverifikasi! Hubungi admin untuk klaim akun.",
+        };
+      }
+    } catch {
+      fulfillmentResult = {
+        isSettled: true,
+        orderId,
+        accountDetails: `Pesanan #${orderId} telah terverifikasi lunas. Hubungi WhatsApp Admin (0813-2508-1046) untuk serah terima akun instan.`,
+        activationUrls: [`Pesanan #${orderId} Tercatat Lunas`],
+        message: "Pembayaran terverifikasi!",
+      };
+    }
+  } else {
+    const urls = claimProductLinks(orderId, productId, quantity);
+    fulfillmentResult = {
+      isSettled: true,
+      orderId,
+      activationUrl: urls[0],
+      activationUrls: urls,
+      message: "Pesanan berhasil diproses!",
+    };
+  }
+
+  if (order) {
+    order.status = "settled";
+    order.fulfilledData = fulfillmentResult;
+    saveOrder(order);
+  }
+
+  return fulfillmentResult;
+}
+
 // In-memory registry of active SSE streams waiting for Midtrans notification
 const paymentStreams = new Map<string, { res: Response; productId?: string; quantity?: number }>();
 
-function notifyPaymentSettled(orderId: string, productId?: string, quantity: number = 1, activationUrls?: string[]) {
+async function notifyPaymentSettled(orderId: string, hintProductId?: string, hintQuantity?: number) {
   const stream = paymentStreams.get(orderId);
+  const data = await fulfillOrder(orderId, hintProductId || stream?.productId, hintQuantity || stream?.quantity);
   if (stream) {
-    const finalUrls = activationUrls || claimProductLinks(orderId, productId || stream.productId, quantity || stream.quantity || 1);
-    stream.res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: finalUrls[0], activationUrls: finalUrls })}\n\n`);
+    stream.res.write(`data: ${JSON.stringify(data)}\n\n`);
     stream.res.end();
     paymentStreams.delete(orderId);
   }
@@ -192,8 +325,8 @@ app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Respons
   if (check.success && check.data) {
     const tx = check.data.transaction_status;
     if (tx === "settlement" || tx === "capture") {
-      const urls = claimProductLinks(orderId, productId, quantity);
-      res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: urls[0], activationUrls: urls })}\n\n`);
+      const data = await fulfillOrder(orderId, productId, quantity);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
       res.end();
       return;
     }
@@ -212,24 +345,23 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
     const orderId = String(id);
     const status = await MidtransService.checkStatus(orderId);
 
-    let isSettled = false;
-    let activationUrls: string[] = [];
-
     if (status.success && status.data) {
       const txStatus = status.data.transaction_status;
       if (txStatus === "settlement" || txStatus === "capture") {
-        isSettled = true;
-        const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
-        const quantity = Math.max(1, parseInt(req.query.quantity as string) || 1);
-        activationUrls = claimProductLinks(orderId, productId, quantity);
+        const fulfilled = await fulfillOrder(orderId);
+        return res.json({
+          ...status,
+          ...fulfilled,
+          isSettled: true,
+        });
       }
     }
 
     res.json({
       ...status,
-      isSettled,
-      activationUrl: activationUrls[0] || null,
-      activationUrls,
+      isSettled: false,
+      activationUrl: null,
+      activationUrls: [],
     });
   } catch (err: any) {
     res.status(500).json({
@@ -239,8 +371,7 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
   }
 });
 
-
-// 5d. Midtrans Webhook Notification
+// 5e. Midtrans Webhook Notification
 app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification", "/notification"], async (req: Request, res: Response) => {
   if (req.method === "GET") {
     return res.json({ status: "ok", message: "Midtrans notification endpoint ready" });
@@ -255,8 +386,7 @@ app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification
     }
     const txStatus = transaction_status;
     if (txStatus === "settlement" || txStatus === "capture") {
-      const actUrls = claimProductLinks(order_id);
-      notifyPaymentSettled(order_id, undefined, actUrls.length, actUrls);
+      await notifyPaymentSettled(order_id);
     }
 
     console.log(`[Midtrans Webhook] Order ${order_id} status: ${transaction_status}`);

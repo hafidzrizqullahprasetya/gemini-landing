@@ -137,11 +137,25 @@ export function ProductModal({
     const basePrice = product.price_idr;
     let foundTier: { min_qty: number; max_qty: number; price_usd: number } | null = null;
 
+    // Wholesale rules for Gemini 18M (Starts at Rp 18.000)
+    const isGemini18 = product.name.toLowerCase().includes("gemini") && product.name.toLowerCase().includes("18");
+    if (isGemini18) {
+      if (quantity >= 10) {
+        return { unitPrice: 15000, activeTier: { min_qty: 10, max_qty: 999, price_usd: 15000 / 16800 }, discountPerUnit: basePrice - 15000 };
+      }
+      if (quantity >= 5) {
+        return { unitPrice: 16000, activeTier: { min_qty: 5, max_qty: 9, price_usd: 16000 / 16800 }, discountPerUnit: basePrice - 16000 };
+      }
+      if (quantity >= 2) {
+        return { unitPrice: 17000, activeTier: { min_qty: 2, max_qty: 4, price_usd: 17000 / 16800 }, discountPerUnit: basePrice - 17000 };
+      }
+    }
+
     if (product.price_tiers && product.price_tiers.length > 0) {
       for (const tier of product.price_tiers) {
         if (quantity >= tier.min_qty && quantity <= tier.max_qty) {
           foundTier = tier;
-          const tierIdr = Math.max(7500, Math.ceil((tier.price_usd * 16800) / 500) * 500);
+          const tierIdr = Math.max(8500, Math.ceil((tier.price_usd * 16800) / 500) * 500);
           if (tierIdr < basePrice) {
             return {
               unitPrice: tierIdr,
@@ -798,13 +812,18 @@ export function ProductModal({
                 )}
               </div>
 
-              <div className="text-center mt-2.5 space-y-0.5">
+              <div className="text-center mt-2.5 space-y-1">
                 <div className="text-xs font-semibold text-foreground tracking-wide">
                   {isUsingDynamicMidtrans ? "QRIS DINAMIS MIDTRANS" : "PEMPEK 'ASLI' WONG KITO"}
                 </div>
                 <div className="text-[11px] font-mono text-muted-foreground">
                   {isUsingDynamicMidtrans ? `Order ID: ${dynamicQr?.orderId}` : "NMID: ID1025384010373"}
                 </div>
+                <p className="text-[10px] text-muted-foreground/80 max-w-[280px] mx-auto text-center leading-tight">
+                  {lang === "id"
+                    ? "Merchant Terdaftar BI: Pempek 'Asli' Wong Kito (Unit Usaha Resmi Octane Store)."
+                    : "Registered BI Merchant: Pempek 'Asli' Wong Kito (Official Octane Unit)."}
+                </p>
               </div>
 
               {/* Action buttons under QR */}
@@ -821,27 +840,29 @@ export function ProductModal({
                   </a>
                 </Button>
 
-                {dynamicQr?.isTest ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRevertToNormalPrice}
-                    className="rounded-full text-xs h-8 px-3 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
-                    title="Kembalikan ke nominal pesanan asli"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    <span>Kembali Normal ({new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalCalculatedAmount)})</span>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleTestOneRupiah}
-                    className="rounded-full text-xs h-8 px-3 text-muted-foreground hover:text-foreground cursor-pointer"
-                    title="Uji coba pembayaran scan Rp 1"
-                  >
-                    <span>Uji Coba Rp 1</span>
-                  </Button>
+                {typeof window !== "undefined" && window.location.search.includes("dev=true") && (
+                  dynamicQr?.isTest ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRevertToNormalPrice}
+                      className="rounded-full text-xs h-8 px-3 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
+                      title="Kembalikan ke nominal pesanan asli"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      <span>Kembali Normal</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleTestOneRupiah}
+                      className="rounded-full text-xs h-8 px-3 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer font-mono"
+                      title="Mode Pengembang: Test Scan Rp 1"
+                    >
+                      <span>Dev: Rp 1</span>
+                    </Button>
+                  )
                 )}
               </div>
             </div>
@@ -915,15 +936,17 @@ export function ProductModal({
                       <span className="text-primary truncate">{url}</span>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Buka Link Ini"
-                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
+                      {url.startsWith("http") && (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Buka Link Ini"
+                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -931,7 +954,7 @@ export function ProductModal({
                           setCopiedIndex(idx);
                           setTimeout(() => setCopiedIndex(null), 2000);
                         }}
-                        title="Salin Link Ini"
+                        title={url.startsWith("http") ? "Salin Link Ini" : "Salin Kredensial Ini"}
                         className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       >
                         {copiedIndex === idx ? (
@@ -954,7 +977,7 @@ export function ProductModal({
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
-              {activationUrls.length <= 1 ? (
+              {activationUrls.length <= 1 && (activationUrls[0] || activationUrl || "").startsWith("http") ? (
                 <Button
                   asChild
                   className="flex-1 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-sm cursor-pointer"
@@ -972,7 +995,7 @@ export function ProductModal({
               ) : (
                 <Button
                   onClick={() => {
-                    const text = activationUrls.map((u, i) => `#${i + 1}: ${u}`).join("\n");
+                    const text = (activationUrls.length > 0 ? activationUrls : [activationUrl || ""]).map((u, i) => `#${i + 1}: ${u}`).join("\n");
                     navigator.clipboard.writeText(text);
                     setCopiedAll(true);
                     setTimeout(() => setCopiedAll(false), 2000);
@@ -982,12 +1005,12 @@ export function ProductModal({
                   {copiedAll ? (
                     <>
                       <Check className="h-4 w-4" />
-                      <span>Semua {activationUrls.length} Link Tersalin!</span>
+                      <span>{lang === "id" ? "Semua Berhasil Tersalin!" : "All Copied!"}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      <span>Salin Semua {activationUrls.length} Link Sekaligus</span>
+                      <span>{lang === "id" ? "Salin Data Akun / Lisensi" : "Copy Account / License Data"}</span>
                     </>
                   )}
                 </Button>

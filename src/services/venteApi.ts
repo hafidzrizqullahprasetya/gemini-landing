@@ -487,9 +487,16 @@ export function enrichProduct(raw: VenteProduct & { price_idr?: number }): Enric
   const category = detectCategory(name);
   let price_idr = raw.price_idr;
   if (!price_idr || price_idr <= 0) {
-    const rate = 16800;
-    const rawIdr = (raw.price_usd || 0) * rate;
-    price_idr = Math.max(7500, Math.ceil(rawIdr / 500) * 500);
+    const lower = name.toLowerCase();
+    if (lower.includes("gemini") && lower.includes("18")) {
+      price_idr = 18000;
+    } else if (lower.includes("gemini")) {
+      price_idr = 12000;
+    } else {
+      const rate = 16800;
+      const rawIdr = (raw.price_usd || 0) * rate;
+      price_idr = Math.max(8500, Math.ceil((rawIdr * 1.2) / 500) * 500);
+    }
   }
 
   const display_image = getProductDisplayImage(name, category);
