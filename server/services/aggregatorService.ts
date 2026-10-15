@@ -137,8 +137,8 @@ function extractDuration(name: string, desc = ""): string {
     return `${dayMatch[1]} HARI`;
   }
 
-  // 4. Short D (e.g. 30D, 14D) - filter out 2D/3D graphics words
-  const cleanForD = combined.replace(/\b[23]D\b/gi, "").replace(/[23]D\/[23]D/gi, "");
+  // 4. Short D (e.g. 30D, 14D, 7D, 3D) - only ignore 2D/3D if describing design/models
+  const cleanForD = combined.replace(/\b[23]D\s*(?:model|design|graphic|render|mesh|print|studio)\b/gi, "");
   const shortDay = cleanForD.match(/\b(\d{1,3})\s*D\b/i);
   if (shortDay && shortDay[1] && Number(shortDay[1]) <= 365) {
     return `${shortDay[1]} HARI`;
@@ -360,6 +360,46 @@ function cleanProductName(name: string): string {
     const brand = mTok[1].toUpperCase() === "CLAUDE" ? "Claude" : "Codex";
     return `${brand} API ${mTok[2]} Token (${mTok[3]} Hari)`;
   }
+
+  // Normalize and beautify titles for end-users
+  clean = clean.replace(/Gemini Pro 18M NEW/i, "Gemini Pro (18 Bulan)");
+  clean = clean.replace(/Adobe Express 12M/i, "Adobe Express (1 Tahun)");
+  clean = clean.replace(/ALIGHT MOTION\s*[-—]?\s*1 TAHUN/i, "Alight Motion (1 Tahun)");
+  clean = clean.replace(/Autodesk all Apps 1 Year/i, "Autodesk All Apps (1 Tahun)");
+  clean = clean.replace(/Avira Prime 3 Months/i, "Avira Prime (3 Bulan)");
+  clean = clean.replace(/CANVA HEAD 30 D/i, "Canva Pro Head (30 Hari)");
+  clean = clean.replace(/Canva Pro 2 yrs FW/i, "Canva Pro (2 Tahun) Full Garansi");
+  clean = clean.replace(/Capcut Pro 1 Month FW/i, "CapCut Pro (1 Bulan) Full Garansi");
+  clean = clean.replace(/CapCut PRO 1600 CREDITS/i, "CapCut Pro (1.600 Kredit)");
+  clean = clean.replace(/DUOLINGO HEAD 14 DAY/i, "Duolingo Super Head (14 Hari)");
+  clean = clean.replace(/DUOLINGO IndPlan 2B/i, "Duolingo Super IndPlan (2 Bulan)");
+  clean = clean.replace(/Duolingo Super 12M/i, "Duolingo Super (1 Tahun)");
+  clean = clean.replace(/edX Premium 12Months/i, "edX Premium (1 Tahun)");
+  clean = clean.replace(/EXPRESSVPN 3D/i, "ExpressVPN (3 Hari)");
+  clean = clean.replace(/NORD VPN 3 DAY/i, "NordVPN (3 Hari)");
+  clean = clean.replace(/HMA VPN 30D/i, "HMA VPN (30 Hari)");
+  clean = clean.replace(/iLovePdf Premium 1Yr/i, "iLovePDF Premium (1 Tahun)");
+  clean = clean.replace(/JetBrains Edu Pack 12m/i, "JetBrains Edu Pack (1 Tahun)");
+  clean = clean.replace(/MEITU VIP (\d+)\s*(?:D|DAY)/i, "Meitu VIP ($1 Hari)");
+  clean = clean.replace(/WINK VIP\+\s*(\d+)\s*(?:D|DAY)/i, "Wink VIP+ ($1 Hari)");
+  clean = clean.replace(/ZOOM PRO\s*(\d+)\s*(?:D|DAY)/i, "Zoom Pro ($1 Hari)");
+  clean = clean.replace(/Microsoft Office 365 Plus 1 year/i, "Microsoft 365 Plus (1 Tahun)");
+  clean = clean.replace(/Miro Lifetime Panel 100 invite/i, "Miro Lifetime (100 Invite Panel)");
+  clean = clean.replace(/Muse AI/i, "Muse AI (1 Miliar Token)");
+  clean = clean.replace(/Notion Plus 12M/i, "Notion Plus (1 Tahun)");
+  clean = clean.replace(/PICSART 7D 150 Credit/i, "Picsart VIP (7 Hari / 150 Kredit)");
+  clean = clean.replace(/Prime Video 6 Months/i, "Prime Video (6 Bulan)");
+  clean = clean.replace(/SCRIBD 30 DAY/i, "Scribd Premium (30 Hari)");
+  clean = clean.replace(/SCRIBD PREMIUM 1M FW/i, "Scribd Premium (1 Bulan) Full Garansi");
+  clean = clean.replace(/Wispr Flow 12M Edu/i, "Wispr Flow Edu (1 Tahun)");
+  clean = clean.replace(/Apple TV 12 Months Link/i, "Apple TV (1 Tahun)");
+  clean = clean.replace(/Canva Pro Admin \(500 invitations\)/i, "Canva Pro Admin (500 Undangan)");
+  clean = clean.replace(/Figma Pro Edu 2yrs/i, "Figma Pro Edu (2 Tahun)");
+  clean = clean.replace(/Framer AI 1 Year/i, "Framer AI (1 Tahun)");
+  clean = clean.replace(/Netflix\s*[-—]\s*1P1U\s*\((\d+)\s*Hari\)/i, "Netflix Private 1P1U ($1 Hari)");
+  clean = clean.replace(/Netflix\s*[-—]\s*1P2U\s*\((\d+)\s*Hari\)/i, "Netflix Sharing 1P2U ($1 Hari)");
+  clean = clean.replace(/Netflix\s*[-—]\s*Semi Private\s*\((\d+)\s*Hari\)/i, "Netflix Semi Private ($1 Hari)");
+  clean = clean.replace(/Spotify Premium 3 Month/i, "Spotify Premium (3 Bulan)");
 
   clean = clean.replace(/\s*\((?:BHF|FW|NW|W\d+D|W\d+H)\)/g, "");
   return clean.trim();
