@@ -163,6 +163,12 @@ function extractWarranty(name: string, desc = "", days = 0): string {
     return `Garansi ${days} Hari`;
   }
   const combined = `${name} ${desc}`;
+  if (/no warranty|non[- ]?garansi|\[nw\]|\bnw\b/i.test(combined)) {
+    return "Non-Garansi (Cek Langsung)";
+  }
+  if (name.toLowerCase().includes("gemini")) {
+    return "Non-Garansi (Cek Langsung)";
+  }
   if (/FW|Full Warranty|Full Garansi/i.test(combined)) {
     return "Full Garansi";
   }
@@ -174,10 +180,7 @@ function extractWarranty(name: string, desc = "", days = 0): string {
   if (mh && mh[1]) {
     return `Garansi ${mh[1]} Jam`;
   }
-  if (/NW|No Warranty/i.test(combined)) {
-    return "Non-Garansi (Cek Langsung)";
-  }
-  return "Garansi Resmi";
+  return "Sesuai Provider";
 }
 
 const CUSTOM_PRODUCT_IMAGES: Array<[string, string]> = [
