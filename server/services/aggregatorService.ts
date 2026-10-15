@@ -517,6 +517,22 @@ export class AggregatorService {
         return a.name.localeCompare(b.name);
       });
 
+      // Real-time stock hydration for top hero products
+      const heroIds = ["az_geminilive", "6a2fda51035a6d898f2106fe", "6a316a7b1777fc2347835653", "6a2fe23a1c8697b163aedcbd", "rd_x622c585a883ede52c6526bae"];
+      await Promise.all(
+        deduplicated
+          .filter((p) => heroIds.includes(String(p.supplier_product_id)))
+          .map(async (p) => {
+            try {
+              const detail = await RezekiService.getProductDetail(String(p.supplier_product_id));
+              if (detail && detail.product) {
+                p.is_in_stock = detail.product.availability === "in_stock";
+                p.stock = typeof detail.product.stock === "number" ? detail.product.stock : (p.is_in_stock ? 10 : 0);
+              }
+            } catch {}
+          })
+      );
+
       this.cachedProducts = deduplicated;
       this.lastFetchTime = Date.now();
     } catch (err) {
