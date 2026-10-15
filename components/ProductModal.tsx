@@ -964,31 +964,6 @@ export function ProductModal({
                     <span>Unduh QRIS</span>
                   </a>
                 </Button>
-
-                {typeof window !== "undefined" && window.location.search.includes("dev=true") && (
-                  dynamicQr?.isTest ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRevertToNormalPrice}
-                      className="rounded-full text-xs h-8 px-3 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
-                      title="Kembalikan ke nominal pesanan asli"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      <span>Kembali Normal</span>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleTestOneRupiah}
-                      className="rounded-full text-xs h-8 px-3 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer font-mono"
-                      title="Mode Pengembang: Test Scan Rp 1"
-                    >
-                      <span>Dev: Rp 1</span>
-                    </Button>
-                  )
-                )}
               </div>
             </div>
 

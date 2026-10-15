@@ -32,4 +32,9 @@ export const config = {
 
   // Cache settings
   cacheTtlSeconds: 60,
+
+  // Admin Security Key
+  adminSecret:
+    process.env.ADMIN_SECRET_KEY ||
+    "e5f8e746785610a14f795c884b32e752499ae80794633999",
 };

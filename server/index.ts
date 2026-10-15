@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import crypto from "node:crypto";
 import path from "node:path";
 import fs from "node:fs";
 import { config } from "./config";
@@ -13,6 +14,59 @@ export const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Helper: Verify Admin authorization (via secret key or loopback CLI)
+function isAuthorizedAdmin(req: Request): boolean {
+  const adminSecret = config.adminSecret;
+  const key = (
+    req.headers["x-octane-admin-key"] ||
+    req.headers["x-admin-key"] ||
+    (typeof req.query.admin_key === "string" ? req.query.admin_key : undefined) ||
+    (typeof req.query.key === "string" ? req.query.key : undefined) ||
+    req.headers["authorization"]?.replace(/^Bearer\s+/i, "")
+  );
+
+  if (adminSecret && key === adminSecret) {
+    return true;
+  }
+
+  // Local loopback CLI access without proxy/tunnel forwarding headers
+  const remoteIp = req.socket.remoteAddress || req.ip;
+  const isDirectLoopback = (
+    (remoteIp === "127.0.0.1" || remoteIp === "::1" || remoteIp === "::ffff:127.0.0.1") &&
+    !req.headers["cf-connecting-ip"] &&
+    !req.headers["x-forwarded-for"]
+  );
+
+  return isDirectLoopback;
+}
+
+// Helper: Calculate official retail price server-side (immune to client tampering)
+function calculateProductPrice(product: any, quantity: number): number {
+  const basePrice = product.price_idr;
+  const lowerName = (product.name || "").toLowerCase();
+
+  // Wholesale rules for Gemini 18M
+  if (lowerName.includes("gemini") && lowerName.includes("18")) {
+    if (quantity >= 10) return 15000;
+    if (quantity >= 5) return 16000;
+    if (quantity >= 2) return 17000;
+  }
+
+  // Wholesale tiers if defined
+  if (product.price_tiers && Array.isArray(product.price_tiers) && product.price_tiers.length > 0) {
+    for (const tier of product.price_tiers) {
+      if (quantity >= tier.min_qty && quantity <= tier.max_qty) {
+        const tierIdr = Math.max(8500, Math.ceil((tier.price_usd * config.vente.usdRate) / 500) * 500);
+        if (tierIdr < basePrice) {
+          return tierIdr;
+        }
+      }
+    }
+  }
+
+  return basePrice;
+}
+
 // 1. Health check
 app.get(["/health", "/api/octane/health"], (_req: Request, res: Response) => {
   res.json({
@@ -23,8 +77,14 @@ app.get(["/health", "/api/octane/health"], (_req: Request, res: Response) => {
   });
 });
 
-// 2. Suppliers health & wallet balances
-app.get("/api/octane/suppliers", async (_req: Request, res: Response) => {
+// 2. Suppliers health & wallet balances (Protected: Admin Only)
+app.get("/api/octane/suppliers", async (req: Request, res: Response) => {
+  if (!isAuthorizedAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      error: "Access denied. Admin authorization required.",
+    });
+  }
   try {
     const suppliers = await AggregatorService.getSuppliersHealth();
     res.json({
@@ -81,8 +141,14 @@ app.get("/api/octane/products/:id", async (req: Request, res: Response) => {
   }
 });
 
-// 5. Create Order
+// 5. Create Order (Internal Admin / Legacy Only — Public must checkout via /api/octane/charge)
 app.post("/api/octane/orders", async (req: Request, res: Response) => {
+  if (!isAuthorizedAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      error: "Direct order endpoint is disabled for security. Please checkout via QRIS (/api/octane/charge).",
+    });
+  }
   try {
     const result = await OrderService.handleOrder(req.body);
     if (!result.success) {
@@ -148,33 +214,72 @@ function saveOrder(order: StoredOrder) {
 // 5b. Create Dynamic QRIS Charge (Midtrans Core API)
 app.post("/api/octane/charge", async (req: Request, res: Response) => {
   try {
-    const { productId, grossAmount, isTest, quantity = 1, email } = req.body;
-    
-    // Security check: Only allow isTest if explicitly authorized in dev
-    const allowTest = process.env.NODE_ENV !== "production" || req.query.dev === "true" || req.headers["x-octane-dev"] === "true";
+    const { productId, isTest, quantity = 1, email } = req.body;
+
+    if (!productId || typeof productId !== "string") {
+      return res.status(400).json({ success: false, message: "ID produk tidak valid." });
+    }
+
+    const cleanProductId = String(productId).trim();
+    const product = await AggregatorService.getProductById(cleanProductId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Produk tidak ditemukan di katalog Octane." });
+    }
+
+    if (!product.is_in_stock) {
+      return res.status(400).json({ success: false, message: `Produk "${product.name}" sedang habis stok.` });
+    }
+
+    // Sanitize quantity (min 1, max stock)
+    const rawQty = parseInt(String(quantity), 10);
+    const maxQty = Math.max(1, product.stock || 50);
+    const qty = Math.min(Math.max(1, isNaN(rawQty) ? 1 : rawQty), maxQty);
+
+    // Validate email if required
+    let sanitizedEmail: string | undefined = undefined;
+    if (product.requires_email || product.delivery_type === "custom_email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(String(email).trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Email valid wajib diisi untuk aktivasi/undangan produk ini.",
+        });
+      }
+      sanitizedEmail = String(email).trim().toLowerCase();
+    } else if (email && typeof email === "string" && email.includes("@")) {
+      sanitizedEmail = String(email).trim().toLowerCase();
+    }
+
+    // SERVER-SIDE ABSOLUTE PRICING — Immune to client tampering
+    const unitPrice = calculateProductPrice(product, qty);
+    const calculatedTotal = unitPrice * qty;
+
+    // Strict Test Mode: ONLY allowed if caller is authorized admin
+    const allowTest = isAuthorizedAdmin(req);
     const finalTest = Boolean(isTest && allowTest);
-    const finalAmount = finalTest ? 1 : Math.max(1000, Number(grossAmount) || 1000);
-    const orderId = `OCT-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const finalAmount = finalTest ? 1 : calculatedTotal;
+
+    // Cryptographically secure, unguessable Order ID (16 random hex chars)
+    const secureToken = crypto.randomBytes(8).toString("hex");
+    const orderId = `OCT-${Date.now()}-${secureToken}`;
 
     const chargeResult = await MidtransService.createQrisCharge({
       orderId,
       grossAmount: finalAmount,
-      productName: productId,
+      productName: product.name,
     });
 
     if (chargeResult.success) {
-      const qty = Math.max(1, Number(quantity) || 1);
-      const product = await AggregatorService.getProductById(String(productId));
-      const productName = product ? product.name : String(productId || "Produk Digital");
-      const supplier = product ? product.supplier : (String(productId).startsWith("r-") ? "rezeki" : "local");
-      const unitCost = product ? (product.original_cost_raw || 0) : 0;
+      const productName = product.name;
+      const supplier = product.supplier || (cleanProductId.startsWith("r-") ? "rezeki" : "local");
+      const unitCost = product.original_cost_raw || 0;
       const costAmount = unitCost * qty;
       const paymentFee = Math.round(finalAmount * 0.007); // 0.7% QRIS fee
       const netProfit = finalAmount - costAmount - paymentFee;
 
       saveOrder({
         orderId,
-        productId: String(productId || "gemini"),
+        productId: cleanProductId,
         productName,
         supplier,
         quantity: qty,
@@ -182,7 +287,7 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
         costAmount,
         paymentFee,
         netProfit,
-        email: email ? String(email).trim() : undefined,
+        email: sanitizedEmail,
         status: "pending",
         createdAt: new Date().toISOString(),
       });
@@ -237,15 +342,25 @@ function claimProductLinks(orderId: string, productId?: string, quantity: number
 }
 
 // Unified order fulfillment (supports sequential pool allocation, Rezeki API, and partial/VIP fallback)
-async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantity?: number) {
+async function fulfillOrder(orderId: string) {
   const order = ordersStore.get(orderId);
-  const productId = order ? order.productId : (hintProductId || "r-az_geminilive");
-  const quantity = Math.max(1, order ? order.quantity : (hintQuantity || 1));
-  const email = order ? order.email : undefined;
+  if (!order) {
+    console.error(`[Security Alert] fulfillOrder attempted for unknown orderId: ${orderId}`);
+    return {
+      isSettled: false,
+      orderId,
+      allDelivered: false,
+      message: "Pesanan tidak terdaftar di sistem.",
+    };
+  }
 
-  if (order && order.status === "settled" && order.fulfilledData) {
+  if (order.status === "settled" && order.fulfilledData) {
     return order.fulfilledData;
   }
+
+  const productId = order.productId;
+  const quantity = Math.max(1, order.quantity || 1);
+  const email = order.email;
 
   const isGemini = productId.toLowerCase().includes("gemini") || productId === "v-16" || productId === "v-230" || productId === "r-az_geminilive";
   const deliveredItems: string[] = [];
@@ -362,11 +477,11 @@ async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantit
 }
 
 // In-memory registry of active SSE streams waiting for Midtrans notification
-const paymentStreams = new Map<string, { res: Response; productId?: string; quantity?: number }>();
+const paymentStreams = new Map<string, { res: Response }>();
 
-async function notifyPaymentSettled(orderId: string, hintProductId?: string, hintQuantity?: number) {
+async function notifyPaymentSettled(orderId: string) {
   const stream = paymentStreams.get(orderId);
-  const data = await fulfillOrder(orderId, hintProductId || stream?.productId, hintQuantity || stream?.quantity);
+  const data = await fulfillOrder(orderId);
   if (stream) {
     stream.res.write(`data: ${JSON.stringify(data)}\n\n`);
     stream.res.end();
@@ -378,8 +493,11 @@ async function notifyPaymentSettled(orderId: string, hintProductId?: string, hin
 app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Response) => {
   const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
   const orderId = String(id);
-  const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
-  const quantity = Math.max(1, parseInt(req.query.quantity as string) || 1);
+  const order = ordersStore.get(orderId);
+
+  if (!order) {
+    return res.status(404).json({ error: "Order not found" });
+  }
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -392,15 +510,16 @@ app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Respons
   const check = await MidtransService.checkStatus(orderId);
   if (check.success && check.data) {
     const tx = check.data.transaction_status;
-    if (tx === "settlement" || tx === "capture") {
-      const data = await fulfillOrder(orderId, productId, quantity);
+    const paidAmount = Math.round(Number(check.data.gross_amount));
+    if ((tx === "settlement" || tx === "capture") && paidAmount >= order.grossAmount) {
+      const data = await fulfillOrder(orderId);
       res.write(`data: ${JSON.stringify(data)}\n\n`);
       res.end();
       return;
     }
   }
 
-  paymentStreams.set(orderId, { res, productId, quantity });
+  paymentStreams.set(orderId, { res });
   req.on("close", () => {
     paymentStreams.delete(orderId);
   });
@@ -411,11 +530,21 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
   try {
     const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
     const orderId = String(id);
+    const order = ordersStore.get(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: "Order not found",
+      });
+    }
+
     const status = await MidtransService.checkStatus(orderId);
 
     if (status.success && status.data) {
       const txStatus = status.data.transaction_status;
-      if (txStatus === "settlement" || txStatus === "capture") {
+      const paidAmount = Math.round(Number(status.data.gross_amount));
+      if ((txStatus === "settlement" || txStatus === "capture") && paidAmount >= order.grossAmount) {
         const fulfilled = await fulfillOrder(orderId);
         return res.json({
           ...status,
@@ -439,8 +568,14 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
   }
 });
 
-// 5e. Financial & Transaction Ledger (AI Agent & Analytics Friendly)
-app.get("/api/octane/ledger", async (_req: Request, res: Response) => {
+// 5e. Financial & Transaction Ledger (Protected: Admin Only)
+app.get("/api/octane/ledger", async (req: Request, res: Response) => {
+  if (!isAuthorizedAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      error: "Access denied. Admin authorization required.",
+    });
+  }
   try {
     const orders = Array.from(ordersStore.values());
     const settled = orders.filter((o) => o.status === "settled");
@@ -498,7 +633,7 @@ app.get("/api/octane/ledger", async (_req: Request, res: Response) => {
   }
 });
 
-// 5e. Midtrans Webhook Notification
+// 5f. Midtrans Webhook Notification
 app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification", "/notification"], async (req: Request, res: Response) => {
   if (req.method === "GET") {
     return res.json({ status: "ok", message: "Midtrans notification endpoint ready" });
@@ -507,24 +642,48 @@ app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification
     const data = req.body;
     const { order_id, status_code, gross_amount, signature_key, transaction_status } = data;
 
+    if (!order_id) {
+      return res.status(400).json({ error: "Missing order_id" });
+    }
+
+    const order = ordersStore.get(order_id);
+    if (!order) {
+      console.warn(`[Midtrans Webhook] Received webhook for unregistered order: ${order_id}`);
+      return res.status(404).json({ error: "Order not found" });
+    }
+
     const isValid = MidtransService.verifySignature(order_id, status_code, gross_amount, signature_key);
     if (!isValid && process.env.NODE_ENV === "production" && MidtransService.isConfigured()) {
+      console.error(`[Security Alert] Invalid webhook signature for order: ${order_id}`);
       return res.status(403).json({ error: "Invalid signature key" });
     }
+
+    const paidAmount = Math.round(Number(gross_amount));
+    if (paidAmount < order.grossAmount) {
+      console.error(`[Security Alert] Underpaid order ${order_id}: expected ${order.grossAmount}, got ${paidAmount}`);
+      return res.status(400).json({ error: "Paid amount less than order gross amount" });
+    }
+
     const txStatus = transaction_status;
     if (txStatus === "settlement" || txStatus === "capture") {
       await notifyPaymentSettled(order_id);
     }
 
-    console.log(`[Midtrans Webhook] Order ${order_id} status: ${transaction_status}`);
+    console.log(`[Midtrans Webhook] Order ${order_id} settled successfully (Amount: Rp ${paidAmount})`);
     return res.json({ status: "ok" });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// 6. Force Cache Refresh
-app.post("/api/octane/refresh", async (_req: Request, res: Response) => {
+// 6. Force Cache Refresh (Protected: Admin Only)
+app.post("/api/octane/refresh", async (req: Request, res: Response) => {
+  if (!isAuthorizedAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      error: "Access denied. Admin authorization required.",
+    });
+  }
   try {
     const products = await AggregatorService.getProducts(true);
     res.json({
