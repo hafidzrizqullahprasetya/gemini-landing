@@ -69,6 +69,7 @@ export function ProductModal({
   const [activationUrl, setActivationUrl] = useState<string | null>(null);
   const [activationUrls, setActivationUrls] = useState<string[]>([]);
   const [localQrDataUrl, setLocalQrDataUrl] = useState<string | null>(null);
+  const [fulfillmentMeta, setFulfillmentMeta] = useState<{ allDelivered?: boolean; pendingCount?: number; deliveredCount?: number; message?: string } | null>(null);
 
   // Convert raw Midtrans qrString directly to crisp base64 Data URL (immune to external network issues)
   useEffect(() => {
@@ -97,6 +98,7 @@ export function ProductModal({
       setActivationUrl(null);
       setActivationUrls([]);
       setUserEmail("");
+      setFulfillmentMeta(null);
       return;
     }
 
@@ -318,6 +320,12 @@ export function ProductModal({
             ? data.activationUrls
             : (data.activationUrl ? [data.activationUrl] : []);
           setActivationUrls(urls);
+          setFulfillmentMeta({
+            allDelivered: data.allDelivered,
+            pendingCount: data.pendingCount,
+            deliveredCount: data.deliveredCount,
+            message: data.message,
+          });
           setStep("success");
           es.close();
         }
@@ -337,6 +345,12 @@ export function ProductModal({
                 ? d.activationUrls
                 : (d.activationUrl ? [d.activationUrl] : []);
               setActivationUrls(urls);
+              setFulfillmentMeta({
+                allDelivered: d.allDelivered,
+                pendingCount: d.pendingCount,
+                deliveredCount: d.deliveredCount,
+                message: d.message,
+              });
               setStep("success");
             }
           })
@@ -408,6 +422,14 @@ export function ProductModal({
       : `Hello Octane Support,\nI have a question about:\n• Product: ${product.name}\n• Quantity: ${quantity}\nThank you!`
   );
   const waInquiryLink = `https://wa.me/6281325081046?text=${waInquiryMessage}`;
+
+  // WhatsApp success claim link
+  const waSuccessMessage = encodeURIComponent(
+    lang === "id"
+      ? `Halo Admin Octane (Hafidz),\nSaya sudah melunasi pesanan:\n• Order ID: #${dynamicQr?.orderId || "OCT-ORDER"}\n• Produk: ${product.name}\n• Jumlah: ${quantity} unit\n• Total: ${displayFormattedPrice}\n${fulfillmentMeta?.pendingCount && fulfillmentMeta.pendingCount > 0 ? `• Status: ${fulfillmentMeta.deliveredCount || 0} akun sudah diterima di layar, mohon serah terima sisa ${fulfillmentMeta.pendingCount} akun lagi.\n` : ""}Mohon konfirmasinya. Terima kasih!`
+      : `Hello Octane Support,\nOrder #${dynamicQr?.orderId} for ${quantity}x ${product.name} has been paid.`
+  );
+  const waSuccessLink = `https://wa.me/6281325081046?text=${waSuccessMessage}`;
 
   const isGemini = product.name.toLowerCase().includes("gemini");
   const isUsingDynamicMidtrans = Boolean(dynamicQr && dynamicQr.isDynamic);
@@ -914,6 +936,24 @@ export function ProductModal({
               </p>
             </div>
 
+            {fulfillmentMeta && fulfillmentMeta.pendingCount && fulfillmentMeta.pendingCount > 0 ? (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-left text-xs space-y-1.5">
+                <div className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <span>
+                    {lang === "id"
+                      ? `${fulfillmentMeta.deliveredCount || 0} Akun Aktif Langsung! Sisa ${fulfillmentMeta.pendingCount} akun siap diserahkan Admin.`
+                      : `${fulfillmentMeta.deliveredCount || 0} Account(s) Ready! Remaining ${fulfillmentMeta.pendingCount} being allocated by Admin.`}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {lang === "id"
+                    ? "Pembayaran Anda telah lunas 100%. Anda dapat langsung menggunakan akun di atas. Untuk serah terima sisa akun, klik tombol WhatsApp di bawah."
+                    : "Payment received in full. You can use the active account above right now. For the remaining accounts, click WhatsApp below."}
+                </p>
+              </div>
+            ) : null}
+
             {/* Activation Links Box (Supports 1 or Multiple Accounts) */}
             <div className="rounded-xl border border-border/70 bg-card p-4 sm:p-5 text-left space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
@@ -1019,15 +1059,15 @@ export function ProductModal({
 
             {/* Support footer */}
             <div className="pt-2 text-xs text-muted-foreground border-t border-border/40 flex items-center justify-between">
-              <span>{lang === "id" ? "Ada pertanyaan aktivasi?" : "Need activation help?"}</span>
+              <span>{lang === "id" ? (fulfillmentMeta && fulfillmentMeta.pendingCount && fulfillmentMeta.pendingCount > 0 ? "Klaim sisa akun ke Admin:" : "Ada pertanyaan aktivasi?") : "Need activation help?"}</span>
               <a
-                href={waInquiryLink}
+                href={waSuccessLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline inline-flex items-center gap-1"
+                className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1.5"
               >
-                <MessageCircle className="h-3.5 w-3.5" />
-                <span>Bantuan WhatsApp</span>
+                <MessageCircle className="h-4 w-4 text-emerald-500" />
+                <span>{lang === "id" ? (fulfillmentMeta && fulfillmentMeta.pendingCount && fulfillmentMeta.pendingCount > 0 ? `Klaim Sisa ${fulfillmentMeta.pendingCount} Akun via WhatsApp` : "Bantuan Admin WhatsApp") : "WhatsApp Support"}</span>
               </a>
             </div>
           </div>

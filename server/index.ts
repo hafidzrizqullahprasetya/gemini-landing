@@ -215,72 +215,115 @@ function claimProductLinks(orderId: string, productId?: string, quantity: number
   return result;
 }
 
-// Unified order fulfillment (supports Gemini pool, Rezeki API, and admin fallback)
+// Unified order fulfillment (supports sequential pool allocation, Rezeki API, and partial/VIP fallback)
 async function fulfillOrder(orderId: string, hintProductId?: string, hintQuantity?: number) {
   const order = ordersStore.get(orderId);
-  const productId = order ? order.productId : hintProductId;
-  const quantity = order ? order.quantity : (hintQuantity || 1);
+  const productId = order ? order.productId : (hintProductId || "r-az_geminilive");
+  const quantity = Math.max(1, order ? order.quantity : (hintQuantity || 1));
   const email = order ? order.email : undefined;
 
   if (order && order.status === "settled" && order.fulfilledData) {
     return order.fulfilledData;
   }
 
-  const isGemini = productId ? (productId.toLowerCase().includes("gemini") || productId === "v-16" || productId === "v-230") : true;
-  let fulfillmentResult: any;
+  const isGemini = productId.toLowerCase().includes("gemini") || productId === "v-16" || productId === "v-230" || productId === "r-az_geminilive";
+  const deliveredItems: string[] = [];
+  let pendingCount = 0;
 
   if (isGemini) {
-    const urls = claimProductLinks(orderId, productId, quantity);
-    fulfillmentResult = {
-      isSettled: true,
-      orderId,
-      activationUrl: urls[0],
-      activationUrls: urls,
-      message: `${quantity} Akun Gemini Resmi berhasil diaktivasi!`,
-    };
-  } else if (productId && productId.startsWith("r-")) {
-    try {
-      const result = await OrderService.handleOrder({
-        productId,
-        quantity,
-        email,
-      });
-      if (result.success) {
-        const details = result.accountDetails || "Akun berhasil diproses.";
-        fulfillmentResult = {
-          isSettled: true,
-          orderId,
-          accountDetails: details,
-          activationUrl: details.startsWith("http") ? details : undefined,
-          activationUrls: [details],
-          message: result.message,
-        };
-      } else {
-        fulfillmentResult = {
-          isSettled: true,
-          orderId,
-          accountDetails: `Pesanan #${orderId} telah terverifikasi lunas. Hubungi WhatsApp Admin (0813-2508-1046) dengan invoice ini untuk serah terima akun instan.`,
-          activationUrls: [`Pesanan #${orderId} Tercatat Lunas — Hubungi Admin WhatsApp`],
-          message: "Pembayaran terverifikasi! Hubungi admin untuk klaim akun.",
-        };
+    // 1. First claim any available real links from local links pool
+    const localPoolUrls = claimProductLinks(orderId, productId, quantity);
+    const realLocalUrls = localPoolUrls.filter((u) => !u.includes("OCT-CLAIM-"));
+    deliveredItems.push(...realLocalUrls);
+
+    // 2. If we still need more accounts, sequentially request from Rezeki Shop
+    const neededFromSupplier = quantity - deliveredItems.length;
+    for (let i = 0; i < neededFromSupplier; i++) {
+      try {
+        const rezekiResult = await OrderService.handleOrder({
+          productId: "r-az_geminilive",
+          quantity: 1,
+          email,
+        });
+        if (rezekiResult.success && rezekiResult.accountDetails) {
+          let detail = String(rezekiResult.accountDetails).trim();
+          if (!detail.startsWith("http") && detail.startsWith("AQC")) {
+            detail = `https://serviceactivation.google.com/subscription/new/${detail}`;
+          }
+          deliveredItems.push(detail);
+        } else {
+          pendingCount += (neededFromSupplier - i);
+          break;
+        }
+      } catch {
+        pendingCount += (neededFromSupplier - i);
+        break;
       }
-    } catch {
-      fulfillmentResult = {
-        isSettled: true,
-        orderId,
-        accountDetails: `Pesanan #${orderId} telah terverifikasi lunas. Hubungi WhatsApp Admin (0813-2508-1046) untuk serah terima akun instan.`,
-        activationUrls: [`Pesanan #${orderId} Tercatat Lunas`],
-        message: "Pembayaran terverifikasi!",
-      };
+    }
+  } else if (productId.startsWith("r-")) {
+    // Other Rezeki products (Canva, CapCut, Claude API, etc.)
+    for (let i = 0; i < quantity; i++) {
+      try {
+        const rezekiResult = await OrderService.handleOrder({
+          productId,
+          quantity: 1,
+          email,
+        });
+        if (rezekiResult.success && rezekiResult.accountDetails) {
+          deliveredItems.push(String(rezekiResult.accountDetails).trim());
+        } else {
+          pendingCount += (quantity - i);
+          break;
+        }
+      } catch {
+        pendingCount += (quantity - i);
+        break;
+      }
     }
   } else {
     const urls = claimProductLinks(orderId, productId, quantity);
+    deliveredItems.push(...urls);
+  }
+
+  // Construct structured response
+  let fulfillmentResult: any;
+  if (deliveredItems.length === quantity) {
     fulfillmentResult = {
       isSettled: true,
       orderId,
-      activationUrl: urls[0],
-      activationUrls: urls,
-      message: "Pesanan berhasil diproses!",
+      activationUrl: deliveredItems[0],
+      activationUrls: deliveredItems,
+      allDelivered: true,
+      deliveredCount: quantity,
+      pendingCount: 0,
+      message: `${quantity} Akun Resmi berhasil diaktivasi secara instan!`,
+    };
+  } else if (deliveredItems.length > 0) {
+    const finalUrls = [...deliveredItems];
+    for (let i = 0; i < pendingCount; i++) {
+      finalUrls.push(`[Sisa ${pendingCount} Akun Sedang Disiapkan Admin — Klaim via WhatsApp]`);
+    }
+    fulfillmentResult = {
+      isSettled: true,
+      orderId,
+      activationUrl: deliveredItems[0],
+      activationUrls: finalUrls,
+      allDelivered: false,
+      deliveredCount: deliveredItems.length,
+      pendingCount,
+      message: `${deliveredItems.length} akun berhasil diserahkan! Sisa ${pendingCount} akun sedang disiapkan Admin via WhatsApp.`,
+    };
+  } else {
+    const pendingNote = `Pesanan #${orderId} Tercatat Lunas — Hubungi Admin WhatsApp untuk Penyerahan Akun`;
+    fulfillmentResult = {
+      isSettled: true,
+      orderId,
+      activationUrl: null,
+      activationUrls: [pendingNote],
+      allDelivered: false,
+      deliveredCount: 0,
+      pendingCount: quantity,
+      message: `Pembayaran terverifikasi! Hubungi admin WhatsApp untuk serah terima ${quantity} akun Anda.`,
     };
   }
 
