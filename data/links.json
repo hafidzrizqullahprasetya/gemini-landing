@@ -11,6 +11,26 @@
   },
   {
     "id": 2,
+    "product": "gemini",
+    "code": "AQCpiIFoj8yuhR_GeminiSlot2_ActiveTokenPoolOctane2026",
+    "url": "https://serviceactivation.google.com/subscription/new/AQCpiIFoj8yuhR_GeminiSlot2_ActiveTokenPoolOctane2026",
+    "status": "available",
+    "order_id": null,
+    "created_at": "2026-10-13T12:00:00Z",
+    "claimed_at": null
+  },
+  {
+    "id": 3,
+    "product": "gemini",
+    "code": "AQCpiIFoj8yuhR_GeminiSlot3_ActiveTokenPoolOctane2026",
+    "url": "https://serviceactivation.google.com/subscription/new/AQCpiIFoj8yuhR_GeminiSlot3_ActiveTokenPoolOctane2026",
+    "status": "available",
+    "order_id": null,
+    "created_at": "2026-10-13T12:00:00Z",
+    "claimed_at": null
+  },
+  {
+    "id": 4,
     "product": "test",
     "code": "OCT-DEMO-LINK-SUCCESS-2026",
     "url": "https://serviceactivation.google.com/subscription/new/OCTANE-TEST-TOKEN-ACTIVE",

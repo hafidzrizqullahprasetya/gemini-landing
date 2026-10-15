@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import QRCode from "qrcode";
 import { config } from "../config";
 
 export interface MidtransChargeParams {
@@ -14,6 +15,7 @@ export interface MidtransChargeResult {
   grossAmount: number;
   qrUrl?: string;
   qrString?: string;
+  qrDataUrl?: string;
   expiryTime?: string;
   transactionStatus?: string;
   message?: string;
@@ -77,6 +79,22 @@ export class MidtransService {
 
       if (res.ok && (data.status_code === "200" || data.status_code === "201")) {
         const qrAction = data.actions?.find((a: any) => a.name === "generate-qr-code");
+        let qrDataUrl: string | undefined;
+        if (data.qr_string) {
+          try {
+            qrDataUrl = await QRCode.toDataURL(data.qr_string, {
+              margin: 1,
+              width: 380,
+              errorCorrectionLevel: "M",
+              color: {
+                dark: "#000000",
+                light: "#ffffff",
+              },
+            });
+          } catch (err) {
+            console.error("[Midtrans] Failed generating QR Data URL:", err);
+          }
+        }
         return {
           success: true,
           orderId,
@@ -84,6 +102,7 @@ export class MidtransService {
           grossAmount: Number(data.gross_amount) || grossAmount,
           qrUrl: qrAction?.url || "",
           qrString: data.qr_string || "",
+          qrDataUrl,
           expiryTime: data.expiry_time,
           transactionStatus: data.transaction_status || "pending",
         };

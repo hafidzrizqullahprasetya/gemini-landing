@@ -119,42 +119,55 @@ app.post("/api/octane/charge", async (req: Request, res: Response) => {
   }
 });
 
-// Helper to claim or issue activation link from pool or auto-generator
+// Helper to claim or issue activation links from pool or auto-generator (supports quantity >= 1)
 const DATA_LINKS_PATH = path.resolve(process.cwd(), "data/links.json");
-function claimProductLink(orderId: string, productId?: string): string {
+function claimProductLinks(orderId: string, productId?: string, quantity: number = 1): string[] {
+  const result: string[] = [];
   try {
     if (fs.existsSync(DATA_LINKS_PATH)) {
       const content = fs.readFileSync(DATA_LINKS_PATH, "utf-8");
       const links: any[] = JSON.parse(content);
-      const existing = links.find((l) => l.order_id === orderId);
-      if (existing) return existing.url;
-
-      let item = links.find((l) => l.status === "available" && productId && productId.toLowerCase().includes(l.product));
-      if (!item) {
-        item = links.find((l) => l.status === "available");
+      const existing = links.filter((l) => l.order_id === orderId);
+      if (existing.length >= quantity) {
+        return existing.map((l) => l.url);
       }
+      existing.forEach((l) => result.push(l.url));
 
-      if (item) {
-        item.status = "claimed";
-        item.claimed_at = new Date().toISOString();
-        item.order_id = orderId;
-        fs.writeFileSync(DATA_LINKS_PATH, JSON.stringify(links, null, 2), "utf-8");
-        return item.url;
+      for (let i = result.length; i < quantity; i++) {
+        let item = links.find((l) => l.status === "available" && productId && productId.toLowerCase().includes(l.product));
+        if (!item) {
+          item = links.find((l) => l.status === "available");
+        }
+        if (item) {
+          item.status = "claimed";
+          item.claimed_at = new Date().toISOString();
+          item.order_id = orderId;
+          result.push(item.url);
+        } else {
+          result.push(`https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}-${i + 1}`);
+        }
       }
+      fs.writeFileSync(DATA_LINKS_PATH, JSON.stringify(links, null, 2), "utf-8");
+      return result;
     }
   } catch (err) {
-    console.error("[claimProductLink error]:", err);
+    console.error("[claimProductLinks error]:", err);
   }
-  return `https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}`;
-}
-// In-memory registry of active SSE streams waiting for Midtrans notification
-const paymentStreams = new Map<string, { res: Response; productId?: string }>();
 
-function notifyPaymentSettled(orderId: string, productId?: string, activationUrl?: string) {
+  while (result.length < quantity) {
+    result.push(`https://serviceactivation.google.com/subscription/new/OCTANE-CLAIM-${orderId}-${result.length + 1}`);
+  }
+  return result;
+}
+
+// In-memory registry of active SSE streams waiting for Midtrans notification
+const paymentStreams = new Map<string, { res: Response; productId?: string; quantity?: number }>();
+
+function notifyPaymentSettled(orderId: string, productId?: string, quantity: number = 1, activationUrls?: string[]) {
   const stream = paymentStreams.get(orderId);
   if (stream) {
-    const finalUrl = activationUrl || claimProductLink(orderId, productId || stream.productId);
-    stream.res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: finalUrl })}\n\n`);
+    const finalUrls = activationUrls || claimProductLinks(orderId, productId || stream.productId, quantity || stream.quantity || 1);
+    stream.res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: finalUrls[0], activationUrls: finalUrls })}\n\n`);
     stream.res.end();
     paymentStreams.delete(orderId);
   }
@@ -165,6 +178,7 @@ app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Respons
   const id = Array.isArray(req.params.orderId) ? req.params.orderId[0] : req.params.orderId;
   const orderId = String(id);
   const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
+  const quantity = Math.max(1, parseInt(req.query.quantity as string) || 1);
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -178,14 +192,14 @@ app.get("/api/octane/payment-stream/:orderId", async (req: Request, res: Respons
   if (check.success && check.data) {
     const tx = check.data.transaction_status;
     if (tx === "settlement" || tx === "capture") {
-      const url = claimProductLink(orderId, productId);
-      res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: url })}\n\n`);
+      const urls = claimProductLinks(orderId, productId, quantity);
+      res.write(`data: ${JSON.stringify({ isSettled: true, orderId, activationUrl: urls[0], activationUrls: urls })}\n\n`);
       res.end();
       return;
     }
   }
 
-  paymentStreams.set(orderId, { res, productId });
+  paymentStreams.set(orderId, { res, productId, quantity });
   req.on("close", () => {
     paymentStreams.delete(orderId);
   });
@@ -199,21 +213,23 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
     const status = await MidtransService.checkStatus(orderId);
 
     let isSettled = false;
-    let activationUrl: string | null = null;
+    let activationUrls: string[] = [];
 
     if (status.success && status.data) {
       const txStatus = status.data.transaction_status;
       if (txStatus === "settlement" || txStatus === "capture") {
         isSettled = true;
         const productId = typeof req.query.productId === "string" ? req.query.productId : undefined;
-        activationUrl = claimProductLink(orderId, productId);
+        const quantity = Math.max(1, parseInt(req.query.quantity as string) || 1);
+        activationUrls = claimProductLinks(orderId, productId, quantity);
       }
     }
 
     res.json({
       ...status,
       isSettled,
-      activationUrl,
+      activationUrl: activationUrls[0] || null,
+      activationUrls,
     });
   } catch (err: any) {
     res.status(500).json({
@@ -222,6 +238,7 @@ app.get("/api/octane/payment-status/:orderId", async (req: Request, res: Respons
     });
   }
 });
+
 
 // 5d. Midtrans Webhook Notification
 app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification", "/notification"], async (req: Request, res: Response) => {
@@ -238,8 +255,8 @@ app.all(["/api/notification", "/api/octane/webhook", "/api/midtrans/notification
     }
     const txStatus = transaction_status;
     if (txStatus === "settlement" || txStatus === "capture") {
-      const actUrl = claimProductLink(order_id);
-      notifyPaymentSettled(order_id, undefined, actUrl);
+      const actUrls = claimProductLinks(order_id);
+      notifyPaymentSettled(order_id, undefined, actUrls.length, actUrls);
     }
 
     console.log(`[Midtrans Webhook] Order ${order_id} status: ${transaction_status}`);
@@ -266,12 +283,25 @@ app.post("/api/octane/refresh", async (_req: Request, res: Response) => {
   }
 });
 
-// 7. Serve Static Frontend SPA in production if dist/ exists
+// 7. Serve Static Frontend SPA in production if dist/ exists (with no-cache for index.html)
 const distPath = path.resolve(process.cwd(), "dist");
 if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html")) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+        }
+      },
+    })
+  );
   app.use((req: Request, res: Response, next) => {
     if (req.path.startsWith("/api/")) return next();
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.join(distPath, "index.html"));
   });
 }
