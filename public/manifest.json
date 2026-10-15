@@ -1,10 +1,33 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-  "name": "Octane AI — Google Gemini Pro",
-  "short_name": "Gemini Pro",
+  "name": "Octane — Digital Store & AI Premium",
+  "short_name": "Octane",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#0091ff",
-  "description": "Google Gemini Pro 18 Bulan + 2TB Google One Cloud Storage."
+  "background_color": "#09090b",
+  "theme_color": "#18181b",
+  "description": "Bahan bakar produktivitas digital & akun AI premium resmi bergaransi.",
+  "icons": [
+    {
+      "src": "/favicon-48x48.png?v=octane2",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png?v=octane2",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png?v=octane2",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png?v=octane2",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
