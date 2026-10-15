@@ -224,20 +224,20 @@ export function ProductCatalog({
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
             {displayedProducts.map((product) => {
               const isGeminiProduct = product.name.toLowerCase().includes("gemini");
               return (
                 <div
                   key={product.id}
-                  className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-lg ${isGeminiProduct
+                  className={`group rounded-xl sm:rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-lg ${isGeminiProduct
                       ? "border-primary/50 ring-1 ring-primary/20 shadow-sm"
                       : "border-border/50 hover:border-border"
                     }`}
                 >
                   <div>
                     {/* Thumbnail & Badges */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/30">
+                    <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden bg-muted/30">
                       <img
                         src={product.display_image || createBrandVectorBadge(product.name, product.category)}
                         alt={product.name}
@@ -249,26 +249,26 @@ export function ProductCatalog({
                       />
 
                       {/* Duration & Gemini highlight */}
-                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                        <div className="bg-background/90 backdrop-blur-sm px-2.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider text-foreground">
+                      <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1">
+                        <div className="bg-background/90 backdrop-blur-sm px-1.5 sm:px-2.5 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-foreground">
                           {localizeDuration(product.duration_label, lang)}
                         </div>
                         {isGeminiProduct && (
-                          <span className="bg-primary text-primary-foreground font-mono font-bold text-[10px] px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                          <span className="bg-primary text-primary-foreground font-mono font-bold text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded shadow-sm flex items-center gap-0.5">
                             <span>🔥</span>
-                            <span>{lang === "id" ? "BEST SELLER" : "HOT"}</span>
+                            <span className="hidden xs:inline">{lang === "id" ? "HOT" : "HOT"}</span>
                           </span>
                         )}
                       </div>
 
                       {/* Stock badge */}
-                      <div className="absolute top-2.5 right-2.5">
+                      <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5">
                         {product.is_in_stock ? (
-                          <span className="bg-emerald-500/90 text-white backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono font-medium">
-                            {t.ready} ({product.stock})
+                          <span className="bg-emerald-500/90 text-white backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-medium">
+                            {product.stock} Ready
                           </span>
                         ) : (
-                          <span className="bg-muted text-muted-foreground backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-mono">
+                          <span className="bg-muted text-muted-foreground backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono">
                             {t.outOfStock}
                           </span>
                         )}
@@ -276,36 +276,36 @@ export function ProductCatalog({
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
-                        <span>{localizeCategory(product.category, lang)}</span>
-                        <span>{localizeWarranty(product.warranty_label, lang)}</span>
+                    <div className="p-2.5 sm:p-4 space-y-1 sm:space-y-2">
+                      <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-muted-foreground font-mono truncate">
+                        <span className="truncate pr-1">{localizeCategory(product.category, lang)}</span>
+                        <span className="shrink-0">{localizeWarranty(product.warranty_label, lang)}</span>
                       </div>
 
-                      <h3 className="font-semibold text-foreground text-base tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]">
+                      <h3 className="font-semibold text-foreground text-xs sm:text-base tracking-tight leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
                         {product.name}
                       </h3>
 
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      <p className="hidden sm:block text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {product.description.replace(/[🤖⭐️✦🚫⏩🚀💎🔑⚡⏳📋🔹✨🌐📊📖⚠️🔗👉•-]/g, "").trim()}
                       </p>
                     </div>
                   </div>
 
                   {/* Footer: Price and CTA */}
-                  <div className="p-4 pt-0 mt-2 border-t border-border/40">
-                    <div className="flex items-baseline justify-between pt-3">
+                  <div className="p-2.5 sm:p-4 pt-0 mt-1 sm:mt-2 border-t border-border/40">
+                    <div className="flex items-baseline justify-between pt-2 sm:pt-3">
                       <div>
-                        <span className="text-xs text-muted-foreground block text-[10px] uppercase font-mono">
+                        <span className="text-muted-foreground block text-[9px] sm:text-[10px] uppercase font-mono">
                           {lang === "id" ? "Harga Satuan" : "Unit Price"}
                         </span>
-                        <span className="text-base font-bold font-mono text-primary">
+                        <span className="text-xs sm:text-base font-bold font-mono text-primary">
                           {product.formatted_price}
                         </span>
                       </div>
 
                       {product.price_usd && (
-                        <span className="text-[11px] font-mono text-muted-foreground">
+                        <span className="hidden sm:inline text-[11px] font-mono text-muted-foreground">
                           ${product.price_usd} USD
                         </span>
                       )}
@@ -313,9 +313,9 @@ export function ProductCatalog({
 
                     <Button
                       onClick={() => onSelectProduct(product)}
-                      className="w-full mt-3 h-10 text-xs font-medium rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                      className="w-full mt-2 sm:mt-3 h-8 sm:h-10 text-[11px] sm:text-xs font-semibold rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5"
                     >
-                      <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                      <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                       <span>{t.orderNow}</span>
                     </Button>
                   </div>

@@ -19,11 +19,9 @@ export default function App() {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("prs_theme");
       if (stored === "dark" || stored === "light") return stored;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+      return "dark"; // Default dark mode for all new visitors
     }
-    return "light";
+    return "dark";
   });
 
   const [lang, setLang] = useState<Language>(() => {
